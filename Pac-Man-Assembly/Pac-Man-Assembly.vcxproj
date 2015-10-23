@@ -10,6 +10,9 @@
       <Platform>Win32</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <ItemGroup>
+    <MASM Include="pacman.asm" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{C7BBAF28-694B-4D56-A68F-1E5BC24CA2A6}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
@@ -85,9 +88,6 @@
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <MASM Include="test.asm" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
     <Import Project="$(VCTargetsPath)\BuildCustomizations\masm.targets" />
