@@ -61,10 +61,10 @@
       <AdditionalDependencies>Irvine/Irvine32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <MASM>
-      <NoLogo>false</NoLogo>
+      <NoLogo>true</NoLogo>
     </MASM>
     <MASM>
-      <GenerateDebugInformation>false</GenerateDebugInformation>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
     </MASM>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
