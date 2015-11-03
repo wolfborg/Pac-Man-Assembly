@@ -3,7 +3,7 @@
 INCLUDE Irvine/Irvine32.inc
 .data
 DirMov BYTE 'w','s','a','d'
-PacPosX db 27
+PacPosX db 26
 PacPosY db 23
 PacPosLast db 1,0
 PacSymLast db '<'
@@ -61,7 +61,7 @@ row20 db "# # # # # # . # #   # # # # # # # #   # # . # # # # # #",0
 row21 db "# . . . . . . . . . . . . # # . . . . . . . . . . . . #",0  
 row22 db "# . # # # # . # # # # # . # # . # # # # # . # # # # . #",0  
 row23 db "# . # # # # . # # # # # . # # . # # # # # . # # # # . #",0  
-row24 db "# o . . # # . . . . . . .  <  . . . . . . . # # . . o #",0  
+row24 db "# o . . # # . . . . . . .     . . . . . . . # # . . o #",0  
 row25 db "# # # . # # . # # . # # # # # # # # . # # . # # . # # #",0  
 row26 db "# # # . # # . # # . # # # # # # # # . # # . # # . # # #",0  
 row27 db "# . . . . . . # # . . . . . . . . . . # # . . . . . . #",0 
@@ -72,17 +72,17 @@ row31 db "# # # # # # # # # # # # # # # # # # # # # # # # # # # #",0
 
 .code
 main PROC
+	
 	mov eax, 15
 	CALL SetTextColor
 	CALL PrintBoard
-	mov ecx, 10
+	mov ecx, 50
 	TestMove:
 		CALL PacMove
 		Loop TestMove
 
-	exit
 
-
+exit
 main ENDP
 
 PrintBoard PROC
@@ -159,7 +159,7 @@ PacMove PROC
 	DeltaLeft:
 		mov al, 20h
 		CALL writechar
-		dec PacPosX
+		SUB PacPosX, 2
 		mov dl, PacPosX
 		CALL GoToXY
 		mov PacSymLast, '>'
@@ -172,7 +172,7 @@ PacMove PROC
 	DeltaRight:
 		mov al, 20h
 		CALL writechar
-		inc PacPosX
+		ADD PacPosX,2
 		mov dl, PacPosX
 		CALL GoToXY
 		mov PacSymLast, '<'
