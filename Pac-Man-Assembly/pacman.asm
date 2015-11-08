@@ -78,7 +78,7 @@ main PROC
 	
 	
 	CALL PrintBoard
-	mov ecx, 50
+	mov ecx, 200
 	TestMove:
 		CALL PacMove
 		Loop TestMove
@@ -187,9 +187,9 @@ PacMove PROC
 	DeltaRight:
 		mov PacCollVal, 1
 		CALL PacmanCollision
-		ADD PacPosX,2
 		CMP CollisionFlag, 1
 		je Moved
+		ADD PacPosX,2
 		mov al, 20h
 		CALL writechar
 		mov dl, PacPosX
