@@ -2,11 +2,14 @@
 ;Contributors
 INCLUDE Irvine/Irvine32.inc
 .data
+CollisionFlag db 0
 DirMov BYTE 'w','s','a','d'
 PacPosX db 26
 PacPosY db 23
 PacPosLast db 1,0
 PacSymLast db '<'
+PacCollVal dw 2
+PacCollPos dw 657
 boardArray  db '############################', 
 			   '#............##............#', 
 			   '#.####.#####.##.#####.####.#', 
@@ -14,24 +17,24 @@ boardArray  db '############################',
 			   '#.####.#####.##.#####.####.#', 
 			   '#..........................#', 
 			   '#.####.##.########.##.####.#', 
-			   '#.####.##.########.##.####.#'	;This is used for collision.
-			db '#......##....##....##......#',
+			   '#.####.##.########.##.####.#',	;This is used for collision.
+			   '#......##....##....##......#',
 			   '######.##### ## #####.######', 
-			   '######.##### ## #####.######', 
-			   '######.##          ##.######',
+			   '######.##### ## #####.######'
+		    db '######.##          ##.######',
 			   '######.## ######## ##.######', 
 			   '######.## #      # ##.######', 
 			   '      .   #      #   .      ', 
-			   '######.## #      # ##.######'	;It is a little hard to read but its the 
-			db '######.## ######## ##.######', 
+			   '######.## #      # ##.######',	;It is a little hard to read but its the 
+			   '######.## ######## ##.######', 
 			   '######.##          ##.######', 
 			   '######.## ######## ##.######', 
 			   '######.## ######## ##.######',
-			   '#............##............#', 
+			   '#............##............#' 
+		   db  '#.####.#####.##.#####.####.#', 
 			   '#.####.#####.##.#####.####.#', 
-			   '#.####.#####.##.#####.####.#', 
-			   '#o..##.......  .......##..o#'	;same as the map below.
-			db '###.##.##.########.##.##.###', 
+			   '#o..##.......  .......##..o#',	;same as the map below.
+			   '###.##.##.########.##.##.###', 
 			   '###.##.##.########.##.##.###', 
 			   '#......##..........##......#', 
 			   '#.##########.##.##########.#',
@@ -73,8 +76,7 @@ row31 db "# # # # # # # # # # # # # # # # # # # # # # # # # # # #",0
 .code
 main PROC
 	
-	mov eax, 15
-	CALL SetTextColor
+	
 	CALL PrintBoard
 	mov ecx, 50
 	TestMove:
@@ -86,12 +88,13 @@ exit
 main ENDP
 
 PrintBoard PROC
-
-mov ecx, 31
-mov edx, OFFSET row1 - 56
+	mov eax, 15
+	CALL SetTextColor
+	mov ecx, 31
+	mov edx, OFFSET row1 - 56
 
 BoardLoop:
-
+	
 	ADD edx, 56
 	CALL writestring
 	CALL CRLF
@@ -131,9 +134,13 @@ PacMove PROC
 	jmp DeltaLast
 
 	DeltaUp:
+		mov PacCollVal, -28
+		CALL PacmanCollision
+		CMP CollisionFlag, 1
+		je Moved
+		dec PacPosY
 		mov al, 20h
 		CALL writechar
-		dec PacPosY
 		mov dh, PacPosY
 		CALL GoToXY
 		mov PacSymLast, 'v'
@@ -144,9 +151,13 @@ PacMove PROC
 		jmp Moved
 	
 	DeltaDown:
+		mov PacCollVal, 28
+		CALL PacmanCollision
+		CMP CollisionFlag, 1
+		je Moved
+		inc PacPosY
 		mov al, 20h
 		CALL writechar
-		inc PacPosY
 		mov dh, PacPosY
 		CALL GoToXY
 		mov PacSymLast, '^'
@@ -157,9 +168,13 @@ PacMove PROC
 		jmp Moved
 	
 	DeltaLeft:
+		mov PacCollVal, -1
+		CALL PacmanCollision
+		CMP CollisionFlag, 1
+		je Moved
+		SUB PacPosX, 2
 		mov al, 20h
 		CALL writechar
-		SUB PacPosX, 2
 		mov dl, PacPosX
 		CALL GoToXY
 		mov PacSymLast, '>'
@@ -170,9 +185,13 @@ PacMove PROC
 		jmp Moved
 	
 	DeltaRight:
+		mov PacCollVal, 1
+		CALL PacmanCollision
+		ADD PacPosX,2
+		CMP CollisionFlag, 1
+		je Moved
 		mov al, 20h
 		CALL writechar
-		ADD PacPosX,2
 		mov dl, PacPosX
 		CALL GoToXY
 		mov PacSymLast, '<'
@@ -183,6 +202,9 @@ PacMove PROC
 		jmp Moved
 	
 	DeltaLast:
+		CALL PacmanCollision
+		CMP CollisionFlag, 1
+		JMP Moved
 		mov al, 20h
 		CALL writechar
 		mov dl, PacPosX
@@ -198,5 +220,38 @@ PacMove PROC
 Moved:
 RET
 PacMove ENDP
+
+PacmanCollision PROC USES ebx
+	mov ebx, 0
+	mov bx, PacCollPos
+	add bx, PacCollVal
+	CMP boardArray[bx], '#'
+	je HitWall
+	CMP boardArray[bx], '.'
+	je HitDotSmall
+	CMP boardArray[bx], 'o'
+	je HitDotBig
+	mov CollisionFlag, 0
+	JMP ExitProc
+
+	HitWall:
+		mov CollisionFlag, 1
+		JMP ExitProcWall
+
+	HitDotSmall:
+		;add score to the variable
+		mov CollisionFlag, 0
+		JMP ExitProc
+
+	HitDotBig:
+		;add score to the variable
+		mov CollisionFlag, 0
+		JMP ExitProc
+
+ExitProc:
+mov PacCollPos, bx
+ExitProcWall:
+RET
+PacmanCollision ENDP
 
 END main
