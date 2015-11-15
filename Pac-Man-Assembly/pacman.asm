@@ -6,6 +6,7 @@ CollisionFlag db 0
 DirMov BYTE 'w','s','a','d'
 PacPosX db 26
 PacPosY db 23
+GhostArray db 0Ch,23,14,0Bh,25,14,0Dh,28,14,0Eh,30,14
 PacPosLast db 1,0
 PacSymLast db '<'
 PacCollVal dw 2
@@ -78,6 +79,8 @@ main PROC
 	
 	
 	CALL PrintBoard
+	Call SpawnGhosts
+
 	mov ecx, 200
 	TestMove:
 		CALL PacMove
@@ -116,6 +119,30 @@ BoardLoop:
 	;CALL GoTOXY
 RET 
 PrintBoard ENDP
+
+SpawnGhosts PROC USES eax ecx edx
+	mov eax, 0
+	mov ecx, 4
+	mov esi, offset GhostArray
+
+	Spawn:
+		mov al, [esi]
+		Call SetTextColor
+		mov dl, [esi+1]
+		mov dh, [esi+2]
+		Call GotoXY
+		mov al, 'G'
+		Call WriteChar
+
+		add esi, 3
+		loop Spawn
+
+	mov al, GhostArray[0]
+	Call SetTextColor
+	mov dl, GhostArray[1]
+	
+	ret
+SpawnGhosts ENDP
 
 PacMove PROC
 	mov dl, PacPosX
