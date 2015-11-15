@@ -3,7 +3,7 @@
 INCLUDE Irvine/Irvine32.inc
 .data
 CollisionFlag db 0
-DirMov BYTE 'w','s','a','d'
+DirMov BYTE 48h,50h,4Bh,4Dh
 PacPosX db 26
 PacPosY db 23
 GhostArray db 0Ch,23,14,0Bh,25,14,0Dh,28,14,0Eh,30,14
@@ -150,13 +150,13 @@ PacMove PROC
 	CALL GoToXY
 	mov eax, 0
 	CALL readchar
-	CMP al, DirMov[0]
+	CMP ah, DirMov[0]
 	je DeltaUp
-	CMP al, DirMov[1]
+	CMP ah, DirMov[1]
 	je DeltaDown
-	CMP al, DirMov[2]
+	CMP ah, DirMov[2]
 	je DeltaLeft
-	CMP al, DirMov[3]
+	CMP ah, DirMov[3]
 	je DeltaRight
 	jmp DeltaLast
 
