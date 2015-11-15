@@ -158,7 +158,7 @@ PacMove PROC
 	jmp DeltaLast
 
 	DeltaUp:
-		mov PacCollVal, -80
+		mov PacCollVal, -28
 		CALL PacmanCollision
 		CMP CollisionFlag, 1
 		je Moved
@@ -175,7 +175,7 @@ PacMove PROC
 		jmp Moved
 	
 	DeltaDown:
-		mov PacCollVal, 80
+		mov PacCollVal, 28
 		CALL PacmanCollision
 		CMP CollisionFlag, 1
 		je Moved
