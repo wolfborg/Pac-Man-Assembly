@@ -91,11 +91,11 @@ PrintBoard PROC
 	mov eax, 15
 	CALL SetTextColor
 	mov ecx, 31
-	mov edx, OFFSET row1 - 56
+	mov edx, OFFSET row1 - 80
 
 BoardLoop:
 	
-	ADD edx, 56
+	ADD edx, 80
 	CALL writestring
 	CALL CRLF
 
@@ -158,7 +158,7 @@ PacMove PROC
 	jmp DeltaLast
 
 	DeltaUp:
-		mov PacCollVal, -28
+		mov PacCollVal, -80
 		CALL PacmanCollision
 		CMP CollisionFlag, 1
 		je Moved
@@ -175,7 +175,7 @@ PacMove PROC
 		jmp Moved
 	
 	DeltaDown:
-		mov PacCollVal, 28
+		mov PacCollVal, 80
 		CALL PacmanCollision
 		CMP CollisionFlag, 1
 		je Moved
