@@ -2,6 +2,7 @@
 ;Contributors
 INCLUDE Irvine/Irvine32.inc
 .data
+PortalFlag db 0
 MoveTimeStart dd 0
 CollisionFlag db 0
 DirMov BYTE 48h,50h,4Bh,4Dh
@@ -215,10 +216,13 @@ PacMove PROC
 		mov PacPosLastY, 1
 		mov PacPosLastX, 0
 		jmp Moved
-	
+
 	DeltaLeft:
 		mov PacCollVal, -1
 		CALL PacmanCollision
+		CALL PortalCheck
+		CMP PortalFlag, 1
+		je Moved
 		CMP CollisionFlag, 1
 		je Moved
 		SUB PacPosX, 2
@@ -236,6 +240,9 @@ PacMove PROC
 	DeltaRight:
 		mov PacCollVal, 1
 		CALL PacmanCollision
+		CALL PortalCheck
+		CMP PortalFlag, 1
+		je Moved
 		CMP CollisionFlag, 1
 		je Moved
 		ADD PacPosX,2
@@ -252,6 +259,9 @@ PacMove PROC
 	
 	DeltaLast:
 		CALL PacmanCollision
+		CALL PortalCheck
+		CMP PortalFlag, 1
+		je Moved
 		CMP CollisionFlag, 1
 		je Moved
 		mov al, 20h
@@ -268,6 +278,7 @@ PacMove PROC
 		CALL writechar
 
 Moved:
+mov PortalFlag, 0
 RET
 PacMove ENDP
 
@@ -303,5 +314,50 @@ mov PacCollPos, bx
 ExitProcWall:
 RET
 PacmanCollision ENDP
+
+PortalCheck PROC
+	
+	CMP PacPosX, 0
+	je PortalLeft
+	CMP PacPosX, 54
+	je PortalRight
+	jmp EndPortal
+
+	PortalRight:
+			mov al, 20h
+			CALL writechar
+			mov PacPosX, 2
+			mov PacCollPos,393
+			mov PacCollVal, 1
+			mov dl, PacPosX
+			CALL GoToXY
+			mov PortalFlag, 1
+			mov PacSymLast, '<'
+			mov al, '<'
+			CALL writechar
+			mov PacPosLastY, 0
+			mov PacPosLastX, 2
+			jmp EndPortal
+
+	
+	PortalLeft:
+			mov al, 20h
+			CALL writechar
+			mov PacPosX, 52
+			mov PacCollPos,418
+			mov PacCollVal, -1
+			mov dl, PacPosX
+			CALL GoToXY
+			mov PortalFlag, 1
+			mov PacSymLast, '>'
+			mov al, '>'
+			CALL writechar
+			mov PacPosLastY, 0
+			mov PacPosLastX, -2
+			
+
+EndPortal:
+RET
+PortalCheck ENDP
 
 END main
