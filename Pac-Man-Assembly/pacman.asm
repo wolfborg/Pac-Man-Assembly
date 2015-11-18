@@ -191,6 +191,8 @@ PacMove PROC
 	DeltaLeft:
 		mov PacCollVal, -1
 		CALL PacmanCollision
+		CMP PacPosx, 0
+		je PortalLeft
 		CMP CollisionFlag, 1
 		je Moved
 		SUB PacPosX, 2
@@ -198,16 +200,30 @@ PacMove PROC
 		CALL writechar
 		mov dl, PacPosX
 		CALL GoToXY
-		mov PacSymLast, '>'
-		mov al, '>'
-		CALL writechar
-		mov PacPosLastY, 0
-		mov PacPosLastX, -2
-		jmp Moved
+		jmp NoLeftPortal
+
+		PortalLeft:
+			mov al, 20h
+			CALL writechar
+			mov PacPosX, 54
+			mov PacCollPos,419
+			mov PacCollVal, -1
+			mov dl, PacPosX
+			CALL GoToXY
+
+		NoLeftPortal:
+			mov PacSymLast, '>'
+			mov al, '>'
+			CALL writechar
+			mov PacPosLastY, 0
+			mov PacPosLastX, -2
+			jmp Moved
 	
 	DeltaRight:
 		mov PacCollVal, 1
 		CALL PacmanCollision
+		CMP PacPosx, 54
+		je PortalRight
 		CMP CollisionFlag, 1
 		je Moved
 		ADD PacPosX,2
@@ -215,12 +231,24 @@ PacMove PROC
 		CALL writechar
 		mov dl, PacPosX
 		CALL GoToXY
-		mov PacSymLast, '<'
-		mov al, '<'
-		CALL writechar
-		mov PacPosLastY, 0
-		mov PacPosLastX, 2
-		jmp Moved
+		jmp NoRightPortal
+		
+		PortalRight:
+			mov al, 20h
+			CALL writechar
+			mov PacPosX, 0
+			mov PacCollPos,392
+			mov PacCollVal, 1
+			mov dl, PacPosX
+			CALL GoToXY
+		
+		NoRightPortal:
+			mov PacSymLast, '<'
+			mov al, '<'
+			CALL writechar
+			mov PacPosLastY, 0
+			mov PacPosLastX, 2
+			jmp Moved
 	
 	DeltaLast:
 		CALL PacmanCollision
@@ -275,5 +303,6 @@ mov PacCollPos, bx
 ExitProcWall:
 RET
 PacmanCollision ENDP
+
 
 END main
