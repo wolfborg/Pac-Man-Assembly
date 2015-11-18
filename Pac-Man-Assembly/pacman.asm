@@ -7,9 +7,11 @@ DirMov BYTE 48h,50h,4Bh,4Dh
 PacPosX db 26
 PacPosY db 23
 GhostArray db 0Ch,23,14,0Bh,25,14,0Dh,28,14,0Eh,30,14
-PacPosLast db 1,0
+PacPosLastX db 2
+PacPosLastY db 0
 PacSymLast db '<'
-PacCollVal dw 2
+PacCollVal dw 1
+PacCollValLast dw 2
 PacCollPos dw 657
 boardArray  db '############################', 
 			   '#............##............#', 
@@ -80,7 +82,7 @@ main PROC
 	CALL PrintBoard
 	CALL SpawnGhosts
 
-	mov ecx, 200
+	mov ecx, 500
 	TestMove:
 		CALL PacMove
 		Loop TestMove
@@ -109,11 +111,6 @@ BoardLoop:
 	mov al, '<'
 	CALL writechar
 
-	;mov eax, 15
-	;CALL SetTextColor
-	;mov dl, 1
-	;mov dh, 31
-	;CALL GoTOXY
 RET 
 PrintBoard ENDP
 
@@ -170,8 +167,8 @@ PacMove PROC
 		mov PacSymLast, 'v'
 		mov al, 'v'
 		CALL writechar
-		mov PacPosLast[1], -1 
-		mov PacPosLast[0], 0		
+		mov PacPosLastY, -1
+		mov PacPosLastX, 0		
 		jmp Moved
 	
 	DeltaDown:
@@ -187,8 +184,8 @@ PacMove PROC
 		mov PacSymLast, '^'
 		mov al, '^'
 		CALL writechar
-		mov PacPosLast[1], 1 
-		mov PacPosLast[0], 0
+		mov PacPosLastY, 1
+		mov PacPosLastX, 0
 		jmp Moved
 	
 	DeltaLeft:
@@ -204,8 +201,8 @@ PacMove PROC
 		mov PacSymLast, '>'
 		mov al, '>'
 		CALL writechar
-		mov PacPosLast[1], 0
-		mov PacPosLast[0], -1
+		mov PacPosLastY, 0
+		mov PacPosLastX, -2
 		jmp Moved
 	
 	DeltaRight:
@@ -221,20 +218,21 @@ PacMove PROC
 		mov PacSymLast, '<'
 		mov al, '<'
 		CALL writechar
-		mov PacPosLast[1], 0
-		mov PacPosLast[0], 1
+		mov PacPosLastY, 0
+		mov PacPosLastX, 2
 		jmp Moved
 	
 	DeltaLast:
 		CALL PacmanCollision
 		CMP CollisionFlag, 1
-		JMP Moved
+		je Moved
 		mov al, 20h
 		CALL writechar
+		mov dx, 0
 		mov dl, PacPosX
 		mov dh, PacPosY
-		add dl, PacPosLast[0]
-		add dh, PacPosLast[1]
+		add dl, PacPosLastX
+		add dh, PacPosLastY
 		mov PacPosX, dl
 		mov PacPosY, dh
 		CALL GoToXY
