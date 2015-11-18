@@ -141,18 +141,17 @@ SpawnGhosts PROC USES eax ecx edx
 SpawnGhosts ENDP
 
 Movements PROC
-	mov eax, 0
+	mov eax, 150	;delay in milliseconds, smaller = faster game
 	mov ecx, 1
 
-	Speed:
-		inc eax
-		cmp eax, 75000000		;speed, smaller = faster
-		je ToEnd
+	Speed:	
+		Call Delay
+		je Movement
 
 		inc ecx
 		loop Speed
 
-	ToEnd:
+	Movement:
 	Call PacMove
 
 	ret
