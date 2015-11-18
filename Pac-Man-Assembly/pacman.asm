@@ -222,7 +222,7 @@ PacMove PROC
 		CALL PacmanCollision
 		CALL PortalCheck
 		CMP PortalFlag, 1
-		je PortalLeft
+		je Moved
 		CMP CollisionFlag, 1
 		je Moved
 		SUB PacPosX, 2
@@ -230,21 +230,19 @@ PacMove PROC
 		CALL writechar
 		mov dl, PacPosX
 		CALL GoToXY
-
-		PortalLeft:
-			mov PacSymLast, '>'
-			mov al, '>'
-			CALL writechar
-			mov PacPosLastY, 0
-			mov PacPosLastX, -2
-			jmp Moved
+		mov PacSymLast, '>'
+		mov al, '>'
+		CALL writechar
+		mov PacPosLastY, 0
+		mov PacPosLastX, -2
+		jmp Moved
 	
 	DeltaRight:
 		mov PacCollVal, 1
 		CALL PacmanCollision
 		CALL PortalCheck
 		CMP PortalFlag, 1
-		je PortalRight
+		je Moved
 		CMP CollisionFlag, 1
 		je Moved
 		ADD PacPosX,2
@@ -252,17 +250,18 @@ PacMove PROC
 		CALL writechar
 		mov dl, PacPosX
 		CALL GoToXY
-		
-		PortalRight:
-			mov PacSymLast, '<'
-			mov al, '<'
-			CALL writechar
-			mov PacPosLastY, 0
-			mov PacPosLastX, 2
-			jmp Moved
+		mov PacSymLast, '<'
+		mov al, '<'
+		CALL writechar
+		mov PacPosLastY, 0
+		mov PacPosLastX, 2
+		jmp Moved
 	
 	DeltaLast:
 		CALL PacmanCollision
+		CALL PortalCheck
+		CMP PortalFlag, 1
+		je Moved
 		CMP CollisionFlag, 1
 		je Moved
 		mov al, 20h
@@ -318,33 +317,44 @@ PacmanCollision ENDP
 
 PortalCheck PROC
 	
-	CMP PacPosx, 0
+	CMP PacPosX, 0
 	je PortalLeft
-	CMP PacPosx, 54
+	CMP PacPosX, 54
 	je PortalRight
 	jmp EndPortal
 
 	PortalRight:
 			mov al, 20h
 			CALL writechar
-			mov PacPosX, 0
-			mov PacCollPos,392
+			mov PacPosX, 2
+			mov PacCollPos,393
 			mov PacCollVal, 1
 			mov dl, PacPosX
 			CALL GoToXY
 			mov PortalFlag, 1
+			mov PacSymLast, '<'
+			mov al, '<'
+			CALL writechar
+			mov PacPosLastY, 0
+			mov PacPosLastX, 2
 			jmp EndPortal
 
 	
 	PortalLeft:
 			mov al, 20h
 			CALL writechar
-			mov PacPosX, 54
-			mov PacCollPos,419
+			mov PacPosX, 52
+			mov PacCollPos,418
 			mov PacCollVal, -1
 			mov dl, PacPosX
-			mov PortalFlag, 1
 			CALL GoToXY
+			mov PortalFlag, 1
+			mov PacSymLast, '>'
+			mov al, '>'
+			CALL writechar
+			mov PacPosLastY, 0
+			mov PacPosLastX, -2
+			
 
 EndPortal:
 RET
