@@ -2,6 +2,7 @@
 ;Contributors
 INCLUDE Irvine/Irvine32.inc
 .data
+MoveTimeStart dd 0
 CollisionFlag db 0
 DirMov BYTE 48h,50h,4Bh,4Dh
 PacPosX db 26
@@ -78,14 +79,16 @@ row31 db "# # # # # # # # # # # # # # # # # # # # # # # # # # # #   |___________
 
 .code
 main PROC
-	
 	CALL PrintBoard
 	CALL SpawnGhosts
 
-	mov ecx, 500
-	TestMove:
-		CALL PacMove
-		Loop TestMove
+	mov ecx, 1
+	Game:
+		Call Movements
+
+		inc ecx
+		Loop Game
+
 exit
 main ENDP
 
@@ -130,20 +133,45 @@ SpawnGhosts PROC USES eax ecx edx
 
 		add esi, 3
 		loop Spawn
-
-	mov al, GhostArray[0]
-	Call SetTextColor
-	mov dl, GhostArray[1]
 	
+	mov eax, 14
+	CALL SetTextColor		;reset Pac-Man's color
+
 	ret
 SpawnGhosts ENDP
+
+Movements PROC
+	mov eax, 150	;delay in milliseconds, smaller = faster game
+	mov ecx, 1
+
+	Speed:	
+		Call Delay
+		je Movement
+
+		inc ecx
+		loop Speed
+
+	Movement:
+	Call PacMove
+
+	ret
+Movements ENDP
+
+MoveInput PROC
+	push edx
+	Call readkey
+	pop edx
+
+	ret
+MoveInput ENDP
 
 PacMove PROC
 	mov dl, PacPosX
 	mov dh, PacPosY
 	CALL GoToXY
 	mov eax, 0
-	CALL readchar
+	CALL MoveInput
+
 	CMP ah, DirMov[0]
 	je DeltaUp
 	CMP ah, DirMov[1]
@@ -187,7 +215,7 @@ PacMove PROC
 		mov PacPosLastY, 1
 		mov PacPosLastX, 0
 		jmp Moved
-	
+
 	DeltaLeft:
 		mov PacCollVal, -1
 		CALL PacmanCollision
@@ -303,6 +331,5 @@ mov PacCollPos, bx
 ExitProcWall:
 RET
 PacmanCollision ENDP
-
 
 END main
