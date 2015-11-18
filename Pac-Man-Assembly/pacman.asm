@@ -130,11 +130,11 @@ SpawnGhosts PROC USES eax ecx edx
 
 		add esi, 3
 		loop Spawn
-
-	mov al, GhostArray[0]
-	Call SetTextColor
-	mov dl, GhostArray[1]
 	
+	;reset Pac-Man's color
+	mov eax, 14
+	CALL SetTextColor
+
 	ret
 SpawnGhosts ENDP
 
