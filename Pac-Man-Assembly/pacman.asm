@@ -121,8 +121,10 @@ PrintBoard ENDP
 
 .data
 GhostColors db 0Ch, 0Bh, 0Dh, 0Eh
-GhostX db 23, 25, 28, 30
-GhostY db 14, 14, 14, 14
+GhostXs db 23, 25, 28, 30
+GhostYs db 14, 14, 14, 14
+GhostDirs db 0, 0, 0, 0
+GhostSpawn db 1, 1, 1, 1	;used to check if Ghost is in spawn zone
 
 .code
 SpawnGhosts PROC USES eax ecx esi
@@ -131,13 +133,7 @@ SpawnGhosts PROC USES eax ecx esi
 	mov esi, 0
 
 	Spawn:
-		mov al, GhostColors[esi]
-		Call SetTextColor
-		mov dl, GhostX[esi]
-		mov dh, GhostY[esi]
-		Call GotoXY
-		mov al, 'G'
-		Call WriteChar
+		Call GhostUpdate
 		inc esi
 		loop Spawn
 	
@@ -146,6 +142,73 @@ SpawnGhosts PROC USES eax ecx esi
 
 	ret
 SpawnGhosts ENDP
+
+;Uses ESI value to update a ghost
+GhostUpdate PROC
+	mov al, GhostColors[esi]
+	Call SetTextColor
+	mov dl, GhostXs[esi]
+	mov dh, GhostYs[esi]
+	Call GotoXY
+	mov al, 'G'
+	Call WriteChar
+
+
+ret
+GhostUpdate ENDP
+
+GhostMove PROC USES eax ecx edx esi
+	mov eax, 0
+	mov ecx, 4
+	mov esi, 0
+
+	Move:
+		mov al, GhostSpawn[esi]
+		cmp al, 1
+		je SpawnMove
+
+		mov eax, 0
+		push esi
+
+		;spawn
+		SpawnMove:
+			cmp esi, 0
+			je RedSpawn
+			cmp esi, 1
+			je BlueSpawn
+			cmp esi, 2
+			je PinkSpawn
+			cmp esi, 3
+			je OrangeSpawn
+			jmp RegularMove
+
+		RedSpawn:
+		inc GhostXs[esi]
+
+		;Call GhostUpdate
+
+		BlueSpawn:
+
+		PinkSpawn:
+		
+		OrangeSpawn:
+
+
+		;directions:
+		;0 = up
+		;1 = down
+		;2 = left
+		;3 = right
+
+		RegularMove:
+
+		loop Move
+
+	Moved:
+	mov eax, 14
+	Call SetTextColor		;reset Pac-Man's color
+	ret
+GhostMove ENDP
 
 Movements PROC
 	mov eax, 150	;delay in milliseconds, smaller = faster game
@@ -160,6 +223,7 @@ Movements PROC
 
 	Movement:
 	Call PacMove
+	Call GhostMove
 
 	ret
 Movements ENDP
