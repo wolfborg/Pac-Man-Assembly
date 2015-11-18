@@ -10,7 +10,6 @@ LEFTARROW BYTE 4Bh
 RIGHTARROW BYTE 4Dh
 PacPosX db 26
 PacPosY db 23
-GhostArray db 0Ch,23,14,0Bh,25,14,0Dh,28,14,0Eh,30,14
 PacPosLastX db 2
 PacPosLastY db 0
 PacSymLast db '<'
@@ -120,25 +119,30 @@ BoardLoop:
 RET 
 PrintBoard ENDP
 
-SpawnGhosts PROC USES eax ecx edx
+.data
+GhostColors db 0Ch, 0Bh, 0Dh, 0Eh
+GhostX db 23, 25, 28, 30
+GhostY db 14, 14, 14, 14
+
+.code
+SpawnGhosts PROC USES eax ecx esi
 	mov eax, 0
 	mov ecx, 4
-	mov esi, offset GhostArray
+	mov esi, 0
 
 	Spawn:
-		mov al, [esi]
+		mov al, GhostColors[esi]
 		Call SetTextColor
-		mov dl, [esi+1]
-		mov dh, [esi+2]
+		mov dl, GhostX[esi]
+		mov dh, GhostY[esi]
 		Call GotoXY
 		mov al, 'G'
 		Call WriteChar
-
-		add esi, 3
+		inc esi
 		loop Spawn
 	
 	mov eax, 14
-	CALL SetTextColor		;reset Pac-Man's color
+	Call SetTextColor		;reset Pac-Man's color
 
 	ret
 SpawnGhosts ENDP
