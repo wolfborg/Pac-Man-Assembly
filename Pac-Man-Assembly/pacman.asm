@@ -4,7 +4,10 @@ INCLUDE Irvine/Irvine32.inc
 .data
 MoveTimeStart dd 0
 CollisionFlag db 0
-DirMov BYTE 48h,50h,4Bh,4Dh
+UPARROW BYTE 48h
+DOWNARROW BYTE 50h
+LEFTARROW BYTE 4Bh
+RIGHTARROW BYTE 4Dh
 PacPosX db 26
 PacPosY db 23
 GhostArray db 0Ch,23,14,0Bh,25,14,0Dh,28,14,0Eh,30,14
@@ -172,13 +175,13 @@ PacMove PROC
 	mov eax, 0
 	CALL MoveInput
 
-	CMP ah, DirMov[0]
+	CMP ah, UPARROW
 	je DeltaUp
-	CMP ah, DirMov[1]
+	CMP ah, DOWNARROW
 	je DeltaDown
-	CMP ah, DirMov[2]
+	CMP ah, LEFTARROW
 	je DeltaLeft
-	CMP ah, DirMov[3]
+	CMP ah, RIGHTARROW
 	je DeltaRight
 	jmp DeltaLast
 
