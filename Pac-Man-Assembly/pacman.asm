@@ -77,11 +77,41 @@ row28 db "# . # # # # # # # # # # . # # . # # # # # # # # # # . #   |           
 row29 db "# . # # # # # # # # # # . # # . # # # # # # # # # # . #   |                   |",0 
 row30 db "# . . . . . . . . . . . . . . . . . . . . . . . . . . #   |HIGH SCORE:        |",0 
 row31 db "# # # # # # # # # # # # # # # # # # # # # # # # # # # #   |___________________|",0 
+LinePos dd 0
+PrintX db 0
+PrintY db 0
+PrintPacX db 0
+PrintPacY db 0
+PrintPacSym db '<'
+TopBorDelay dd 5
+StarMess BYTE "Starring:",0
+PacMess BYTE "Pacman",0
+ClrMess BYTE "            ",0
+DirKeyMess BYTE "Use the ARROW keys to move Pacman",0
+Clyde BYTE "Clyde",0
+Pinky BYTE "Pinky",0
+Inky BYTE "Inky",0
+Blinky BYTE "Blinky",0
+PacmanTitle1  db "#########    #######   #########  #       #   #######   #         #",0
+PacmanTitle2  db "#        #  #       #  #          ##     ##  #       #  ##        #",0
+PacmanTitle3  db "#        #  #       #  #          # #   # #  #       #  # #       #",0
+PacmanTitle4  db "#        #  #       #  #          #  # #  #  #       #  #  #      #",0
+PacmanTitle5  db "#        #  #       #  #          #   #   #  #       #  #   #     #",0
+PacmanTitle6  db "#########   #########  #          #       #  #########  #    #    #",0
+PacmanTitle7  db "#           #       #  #          #       #  #       #  #     #   #",0
+PacmanTitle8  db "#           #       #  #          #       #  #       #  #      #  #",0
+PacmanTitle9  db "#           #       #  #          #       #  #       #  #       # #",0
+PacmanTitle10 db "#           #       #  #          #       #  #       #  #        ##",0
+PacmanTitle11 db "#           #       #  #########  #       #  #       #  #         #",0
 
 .code
 main PROC
+	CALL StartScreen
+	CALL CLRSCR
 	CALL PrintBoard
 	CALL SpawnGhosts
+	mov eax, 1000
+	CALL Delay
 
 	mov ecx, 1
 	Game:
@@ -359,5 +389,539 @@ PortalCheck PROC
 EndPortal:
 RET
 PortalCheck ENDP
+
+StartScreen PROC
+
+	mov eax, 15
+	CALL SetTextColor
+	CALL PrintPacPos
+	inc PrintPacX
+	mov eax,500
+	CALL Delay
+	mov al, 218
+	CALL PrintBorPos
+	inc PrintX
+	CALL PrintPacPos
+	inc PrintPacX
+
+	mov ecx, 78
+	SideOne:
+		CALL PrintPacPos
+		inc PrintPacX
+		mov al, 196
+		CALL PrintBorPos
+		inc PrintX
+		mov eax, TopBorDelay
+		CALL Delay
+		Loop SideOne
+
+	mov al, 191
+	CALL writechar
+	inc PrintY
+	add PrintPacY,2
+	dec PrintPacX
+	mov PrintPacSym, '^'
+	CALL PrintPacPos
+
+	mov ecx, 13
+	SideTwoU:
+		CALL PrintPacPos
+		inc PrintPacY
+		mov al, 179
+		CALL PrintBorPos
+		inc PrintY
+		mov eax, TopBorDelay
+		CALL Delay
+		Loop SideTwoU
+
+	mov al, 180
+	CALL PrintBorPos
+	inc PrintY
+	inc PrintPacY
+
+	mov ecx, 7
+	SideTwoM:
+		CALL PrintPacPos
+		inc PrintPacY
+		mov al, 179
+		CALL PrintBorPos
+		inc PrintY
+		mov eax, TopBorDelay
+		CALL Delay
+		Loop SideTwoM
+
+		mov al, 180
+	CALL PrintBorPos
+	inc PrintY
+	inc PrintPacY
+
+	mov ecx, 6
+	SideTwoL:
+		CALL PrintPacPos
+		inc PrintPacY
+		mov al, 179
+		CALL PrintBorPos
+		inc PrintY
+		mov eax, TopBorDelay
+		CALL Delay
+		Loop SideTwoL
+
+	mov al, 217
+	CALL PrintBorPos
+	dec PrintX
+	dec PrintPacX
+	dec PrintPacY
+	mov PrintPacSym, '>'
+	CALL PrintPacPos
+	dec PrintPacX
+
+	mov ecx, 78
+	SideThree:
+		CALL PrintPacPos
+		dec PrintPacX
+		mov al, 196
+		CALL PrintBorPos
+		dec PrintX
+		mov eax, TopBorDelay
+		CALL Delay
+		Loop SideThree
+	
+	mov al, 192
+	CALL PrintBorPos
+	dec PrintY
+	dec PrintPacY
+	inc PrintPacX
+	mov PrintPacSym, 'v'
+	CALL PrintPacPos
+	dec PrintPacY
+
+	mov ecx, 6
+	SideFourL:
+		CALL PrintPacPos
+		dec PrintPacY
+		mov al, 179
+		CALL PrintBorPos
+		dec PrintY
+		mov eax, TopBorDelay
+		CALL Delay
+		Loop SideFourL
+
+	mov al, 195
+	CALL PrintBorPos
+	dec PrintY
+	
+	mov ecx, 7
+	SideFourM:
+		CALL PrintPacPos
+		dec PrintPacY
+		mov al, 179
+		CALL PrintBorPos
+		dec PrintY
+		mov eax, TopBorDelay
+		CALL Delay
+		Loop SideFourM
+
+	mov al, 195
+	CALL PrintBorPos
+	dec PrintY
+	dec PrintPacY
+
+	mov ecx, 13
+	SideFourU:
+		CALL PrintPacPos
+		dec PrintPacY
+		mov al, 179
+		CALL PrintBorPos
+		dec PrintY
+		mov eax, TopBorDelay
+		CALL Delay
+		Loop SideFourU
+
+	mov PrintPacY, 14
+	mov PrintPacX, 1
+	mov PrintPacSym, '<'
+	CALL PrintPacPos
+	add PrintPacY, 8
+	CALL PrintPacPos
+	inc PrintPacX
+	mov PrintX, 1
+	mov PrintY, 22
+	 
+	mov ecx, 77
+	TwoLines:
+		mov al, 196
+		CALL PrintBorPos
+		sub PrintY, 8
+		CALL PrintBorPos
+		inc PrintX
+		add PrintY, 8
+		CALL PrintPacPos
+		sub PrintPacY, 8
+		CALL PrintPacPos
+		add PrintPacY, 8
+		inc PrintPacX
+		mov eax, TopBorDelay
+		CALL Delay
+		Loop TwoLines
+
+	mov al, 196
+	CALL PrintBorPos
+	sub PrintY, 8
+	CALL PrintBorPos
+	CALL PrintTitle
+RET
+StartScreen ENDP
+PrintPacPos PROC
+
+	mov dh, PrintPacY
+	mov dl, PrintPacX
+	mov al, PrintPacSym
+	CALL GoToXY
+	CALL writechar
+
+RET
+PrintPacPos ENDP
+
+PrintBorPos PROC
+
+	mov dh, PrintY
+	mov dl, PrintX
+	CALL GoToXY
+	CALL writechar
+
+RET
+PrintBorPos ENDP
+
+PrintTitle PROC uses edx ecx
+	
+	mov edx, 0
+	mov ecx, 11
+	mov PrintX, 6
+	mov PrintY, 2
+
+	TitleLoop:
+		mov dh, PrintY
+		mov dl, PrintX
+		CALL GoToXY
+		CALL PrintLine
+		inc PrintY
+		add LinePos, 68
+		CALL GoToXY
+		mov eax, 50
+		CALL Delay
+		Loop TitleLoop
+		
+		CALL StarringAnimation
+RET
+PrintTitle ENDP
+
+PrintLine PROC uses ecx
+	mov eax, 14
+	CALL SetTextColor
+	mov ecx, 68
+	mov esi, LinePos
+	TitleLoop:
+		mov al, PacmanTitle1[esi]
+		CALL writechar
+		inc esi
+		Loop TitleLoop
+
+
+RET
+PrintLine ENDP
+
+StarringAnimation PROC
+	
+	mov eax, 15
+	CALL SetTextColor
+	mov eax, 500
+	CALL Delay
+	mov edx, 0
+	mov dh, 17
+	mov dl, 36
+	CALL GoToXY
+	mov edx, OFFSET StarMess
+	CALL writestring
+	CALL Delay
+	
+	CALL GhostAnimations
+	CALL PacAnimation
+	CALL InputMessage
+
+RET
+StarringAnimation ENDP
+
+PacAnimation PROC uses ecx
+	
+	mov eax, 15
+	CALL SetTextColor
+	mov dh, 18
+	mov dl, 20
+	mov al, 'o'
+	CALL GoToXY
+	CALL writechar
+	mov eax, 14
+	CALL SetTextColor
+	mov dh, 17
+	mov dl, 0
+	CALL GoToXY
+	mov al, " "
+	CALL Writechar
+	mov dh, 18
+	mov dl, 0
+	CALL GoToXY
+	mov al, " "
+	CALL Writechar
+	mov dh, 19
+	mov dl, 0
+	CALL GoToXY
+	mov al, " "
+	CALL Writechar
+	mov eax, 300
+	CALL Delay
+	mov dh, 18
+	mov dl, 0
+	CALL GoToXY
+	mov al, "<"
+	CALL Writechar
+	mov eax, 500
+	CALL Delay
+
+	mov PrintX, 0
+	mov PrintY, 18
+	mov ecx,20
+	MovingPacL:
+		mov dh, PrintY
+		mov dl, PrintX
+		mov al, ' '
+		CALL GoToXY
+		CALL writechar
+		inc PrintX
+		mov dl, PrintX
+		mov dh, PrintY
+		mov al, '<'
+		CALL GoToXY
+		CALL writechar
+		mov eax, 50
+		CALL Delay
+		Loop MovingPacL
+	
+	mov eax, 9
+	CALL SetTextColor
+	mov dh, 18
+	mov dl, 39
+	CALL GoToXY
+	mov al, 'G'
+	CALL writechar
+	mov eax, 14
+	CALL SetTextColor
+	mov eax, 300
+	CALL Delay
+
+	mov ecx,19
+	MovingPacR:
+		mov dh, PrintY
+		mov dl, PrintX
+		mov al, ' '
+		CALL GoToXY
+		CALL writechar
+		inc PrintX
+		mov dl, PrintX
+		mov dh, PrintY
+		mov al, '<'
+		CALL GoToXY
+		CALL writechar
+		mov eax, 50
+		CALL Delay
+		Loop MovingPacR
+
+	mov ecx, 4
+	SpinPac:
+		mov dh, 18
+		mov dl, 39
+		CALL GoToXY
+		mov eax, 50
+		CALL Delay
+		mov al, 'v'
+		CALL writechar
+		mov dh, 18
+		mov dl, 39
+		CALL GoToXY
+		mov eax, 50
+		CALL Delay
+		mov al, '>'
+		CALL writechar
+		mov dh, 18
+		mov dl, 39
+		CALL GoToXY
+		mov eax, 50
+		CALL Delay
+		mov al, '^'
+		CALL writechar
+		mov dh, 18
+		mov dl, 39
+		CALL GoToXY
+		mov eax, 50
+		CALL Delay
+		mov al, '<'
+		CALL writechar
+		Loop SpinPac
+
+	mov dh, 19
+	mov dl, 37 
+	CALL GoToXY
+	mov edx, OFFSET PacMess
+	mov eax, 700
+	CALL Delay
+	CALL writestring
+	mov eax, 600
+	CALL Delay
+
+RET
+PacAnimation ENDP
+
+GhostAnimations PROC
+
+	CALL BlinkyStar
+	CALL PinkyStar
+	CALL InkyStar
+	CALL ClydeStar
+
+RET
+GhostAnimations ENDP 
+
+BlinkyStar PROC
+
+	mov eax, 12
+	CALL SetTextColor
+	mov dh, 19
+	mov dl, 37
+	CALL GoToXY
+	mov edx, OFFSET ClrMess
+	CALL writestring
+	mov dh, 18
+	mov dl, 39
+	CALL GoToXY
+	mov al, 'G'
+	CALL writechar
+	mov eax, 500
+	mov dh, 19
+	mov dl, 37
+	CALL GoToXY
+	mov eax, 500
+	CALL Delay
+	mov edx, OFFSET Blinky
+	CALL writestring
+	mov eax, 500
+	CALL Delay
+
+RET
+BlinkyStar ENDP
+
+PinkyStar PROC
+
+	mov eax, 13
+	CALL SetTextColor
+	mov dh, 19
+	mov dl, 37
+	CALL GoToXY
+	mov edx, OFFSET ClrMess
+	CALL writestring
+	mov dh, 18
+	mov dl, 39
+	CALL GoToXY
+	mov al, 'G'
+	CALL writechar
+	mov eax, 500
+	mov dh, 19
+	mov dl, 37
+	CALL GoToXY
+	mov eax, 500
+	CALL Delay
+	mov edx, OFFSET Pinky
+	CALL writestring
+	mov eax, 500
+	CALL Delay
+
+RET
+PinkyStar ENDP
+
+InkyStar PROC
+
+	mov eax, 11
+	CALL SetTextColor
+	mov dh, 19
+	mov dl, 37
+	CALL GoToXY
+	mov edx, OFFSET ClrMess
+	CALL writestring
+	mov dh, 18
+	mov dl, 39
+	CALL GoToXY
+	mov al, 'G'
+	CALL writechar
+	mov eax, 500
+	mov dh, 19
+	mov dl, 38
+	CALL GoToXY
+	mov eax, 500
+	CALL Delay
+	mov edx, OFFSET Inky
+	CALL writestring
+	mov eax, 500
+	CALL Delay
+
+RET
+InkyStar ENDP
+
+ClydeStar PROC
+
+	mov eax, 14
+	CALL SetTextColor
+	mov dh, 19
+	mov dl, 37
+	CALL GoToXY
+	mov edx, OFFSET ClrMess
+	CALL writestring
+	mov dh, 18
+	mov dl, 39
+	CALL GoToXY
+	mov al, 'G'
+	CALL writechar
+	mov eax, 500
+	mov dh, 19
+	mov dl, 37
+	CALL GoToXY
+	mov eax, 500
+	CALL Delay
+	mov edx, OFFSET Clyde
+	CALL writestring
+	mov eax, 500
+	CALL Delay
+	mov dh, 19
+	mov dl, 37
+	CALL GoToXY
+	mov edx, OFFSET ClrMess
+	CALL writestring
+
+RET
+ClydeStar ENDP
+
+InputMessage PROC uses edx
+
+mov eax, 15
+CALL SetTextColor
+mov dh,25
+mov dl, 24
+CALL GoToXY 
+mov edx, OFFSET DirKeyMess
+CALL writestring
+mov dh,27
+mov dl, 24
+CALL GoToXY 
+mov eax, 1750
+CALL Delay
+RET
+InputMessage ENDP
 
 END main
