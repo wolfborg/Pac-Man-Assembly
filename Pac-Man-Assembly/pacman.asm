@@ -2,15 +2,22 @@
 ;Contributors
 INCLUDE Irvine/Irvine32.inc
 .data
+PortalFlag db 0
+MoveTimeStart dd 0
 CollisionFlag db 0
 DirMov BYTE 48h,50h,4Bh,4Dh
 PacPosX db 26
 PacPosY db 23
 GhostArray db 0Ch,23,14,0Bh,25,14,0Dh,28,14,0Eh,30,14
-PacPosLast db 1,0
+PacPosLastX db 2
+PacPosLastY db 0
 PacSymLast db '<'
-PacCollVal dw 2
+PacCollVal dw 1
+PacCollValLast dw 2
 PacCollPos dw 657
+ScoreX db 64
+ScoreY db 5
+Score dw 0
 boardArray  db '############################', 
 			   '#............##............#', 
 			   '#.####.#####.##.#####.####.#', 
@@ -42,48 +49,79 @@ boardArray  db '############################',
 			   '#.##########.##.##########.#', 
 			   '#..........................#', 
 			   '############################'
-row1  db "# # # # # # # # # # # # # # # # # # # # # # # # # # # #    ___________________  ",0
-row2  db "# . . . . . . . . . . . . # # . . . . . . . . . . . . #   |    < Scores >     | ",0  
-row3  db "# . # # # # . # # # # # . # # . # # # # # . # # # # . #   |    1:             | ",0  ;67 is the position in each line where the score will be placed
-row4  db "# o # # # # . # # # # # . # # . # # # # # . # # # # o #   |    2:             | ",0  ;72 for the High score line
-row5  db "# . # # # # . # # # # # . # # . # # # # # . # # # # . #   |    3:             | ",0  ;80 characters per line
-row6  db "# . . . . . . . . . . . . . . . . . . . . . . . . . . #   |    4:             | ",0  
-row7  db "# . # # # # . # # . # # # # # # # # . # # . # # # # . #   |    5:             | ",0  
-row8  db "# . # # # # . # # . # # # # # # # # . # # . # # # # . #   |    6:             | ",0  
-row9  db "# . . . . . . # # . . . . # # . . . . # # . . . . . . #   |    7:             | ",0  
-row10 db "# # # # # # . # # # # #   # #   # # # # # . # # # # # #   |    8:             | ",0  
-row11 db "# # # # # # . # # # # #   # #   # # # # # . # # # # # #   |    9:             | ",0  
-row12 db "# # # # # # . # #                     # # . # # # # # #   |   10:             | ",0  
-row13 db "# # # # # # . # #   # # # - - # # #   # # . # # # # # #   |   11:             | ",0  
-row14 db "# # # # # # . # #   #             #   # # . # # # # # #   |   12:             | ",0  
-row15 db "            .       #             #       .               |   13:             | ",0  
-row16 db "# # # # # # . # #   #             #   # # . # # # # # #   |   14:             | ",0  
-row17 db "# # # # # # . # #   # # # # # # # #   # # . # # # # # #   |   15:             | ",0  
-row18 db "# # # # # # . # #                     # # . # # # # # #   |   16:             | ",0  
-row19 db "# # # # # # . # #   # # # # # # # #   # # . # # # # # #   |   17:             | ",0 
-row20 db "# # # # # # . # #   # # # # # # # #   # # . # # # # # #   |   18:             | ",0  
-row21 db "# . . . . . . . . . . . . # # . . . . . . . . . . . . #   |   19:             | ",0  
-row22 db "# . # # # # . # # # # # . # # . # # # # # . # # # # . #   |   20:             | ",0  
-row23 db "# . # # # # . # # # # # . # # . # # # # # . # # # # . #   |   21:             | ",0  
-row24 db "# o . . # # . . . . . . .     . . . . . . . # # . . o #   |   22:             | ",0  
-row25 db "# # # . # # . # # . # # # # # # # # . # # . # # . # # #   |   23:             | ",0  
-row26 db "# # # . # # . # # . # # # # # # # # . # # . # # . # # #   |   24:             | ",0  
-row27 db "# . . . . . . # # . . . . . . . . . . # # . . . . . . #   |   25:             | ",0 
-row28 db "# . # # # # # # # # # # . # # . # # # # # # # # # # . #   |                   | ",0 
-row29 db "# . # # # # # # # # # # . # # . # # # # # # # # # # . #   |                   | ",0 
-row30 db "# . . . . . . . . . . . . . . . . . . . . . . . . . . #   |HIGH SCORE:        | ",0 
-row31 db "# # # # # # # # # # # # # # # # # # # # # # # # # # # #   |___________________| ",0 
+row1  db "# # # # # # # # # # # # # # # # # # # # # # # # # # # #    ___________________ ",0
+row2  db "# . . . . . . . . . . . . # # . . . . . . . . . . . . #   |                   |",0  
+row3  db "# . # # # # . # # # # # . # # . # # # # # . # # # # . #   |  <Current Score>  |",0  
+row4  db "# o # # # # . # # # # # . # # . # # # # # . # # # # o #   |                   |",0  
+row5  db "# . # # # # . # # # # # . # # . # # # # # . # # # # . #   |    -              |",0  ;64 for current score
+row6  db "# . . . . . . . . . . . . . . . . . . . . . . . . . . #   |___________________|",0  
+row7  db "# . # # # # . # # . # # # # # # # # . # # . # # # # . #   |                   |",0  
+row8  db "# . # # # # . # # . # # # # # # # # . # # . # # # # . #   |   <Past Scores>   |",0  
+row9  db "# . . . . . . # # . . . . # # . . . . # # . . . . . . #   |                   |",0  
+row10 db "# # # # # # . # # # # #   # #   # # # # # . # # # # # #   |   1:              |",0  ;64 for past scores
+row11 db "# # # # # # . # # # # #   # #   # # # # # . # # # # # #   |   2:              |",0  
+row12 db "# # # # # # . # #                     # # . # # # # # #   |   3:              |",0  
+row13 db "# # # # # # . # #   # # # - - # # #   # # . # # # # # #   |   4:              |",0  
+row14 db "# # # # # # . # #   #             #   # # . # # # # # #   |   5:              |",0  
+row15 db "            .       #             #       .               |   6:              |",0  
+row16 db "# # # # # # . # #   #             #   # # . # # # # # #   |   7:              |",0  
+row17 db "# # # # # # . # #   # # # # # # # #   # # . # # # # # #   |   8:              |",0  
+row18 db "# # # # # # . # #                     # # . # # # # # #   |   9:              |",0  
+row19 db "# # # # # # . # #   # # # # # # # #   # # . # # # # # #   |  10:              |",0 
+row20 db "# # # # # # . # #   # # # # # # # #   # # . # # # # # #   |  11:              |",0  
+row21 db "# . . . . . . . . . . . . # # . . . . . . . . . . . . #   |  12:              |",0  
+row22 db "# . # # # # . # # # # # . # # . # # # # # . # # # # . #   |  13:              |",0  
+row23 db "# . # # # # . # # # # # . # # . # # # # # . # # # # . #   |  14:              |",0  
+row24 db "# o . . # # . . . . . . .     . . . . . . . # # . . o #   |  15:              |",0  
+row25 db "# # # . # # . # # . # # # # # # # # . # # . # # . # # #   |___________________|",0  
+row26 db "# # # . # # . # # . # # # # # # # # . # # . # # . # # #   |                   |",0  
+row27 db "# . . . . . . # # . . . . . . . . . . # # . . . . . . #   |   <High Score>    |",0 
+row28 db "# . # # # # # # # # # # . # # . # # # # # # # # # # . #   |                   |",0 
+row29 db "# . # # # # # # # # # # . # # . # # # # # # # # # # . #   |    -              |",0  ;64 for High score
+row30 db "# . . . . . . . . . . . . . . . . . . . . . . . . . . #   |                   |",0 
+row31 db "# # # # # # # # # # # # # # # # # # # # # # # # # # # #   |___________________|",0 
+LinePos dd 0
+PrintX db 0
+PrintY db 0
+PrintPacX db 0
+PrintPacY db 0
+PrintPacSym db '<'
+TopBorDelay dd 5
+StarMess BYTE "Starring:",0
+PacMess BYTE "Pacman",0
+ClrMess BYTE "            ",0
+DirKeyMess BYTE "Use the ARROW keys to move Pacman",0
+Clyde BYTE "Clyde",0
+Pinky BYTE "Pinky",0
+Inky BYTE "Inky",0
+Blinky BYTE "Blinky",0
+PacmanTitle1  db "#########    #######   #########  #       #   #######   #         #",0
+PacmanTitle2  db "#        #  #       #  #          ##     ##  #       #  ##        #",0
+PacmanTitle3  db "#        #  #       #  #          # #   # #  #       #  # #       #",0
+PacmanTitle4  db "#        #  #       #  #          #  # #  #  #       #  #  #      #",0
+PacmanTitle5  db "#        #  #       #  #          #   #   #  #       #  #   #     #",0
+PacmanTitle6  db "#########   #########  #          #       #  #########  #    #    #",0
+PacmanTitle7  db "#           #       #  #          #       #  #       #  #     #   #",0
+PacmanTitle8  db "#           #       #  #          #       #  #       #  #      #  #",0
+PacmanTitle9  db "#           #       #  #          #       #  #       #  #       # #",0
+PacmanTitle10 db "#           #       #  #          #       #  #       #  #        ##",0
+PacmanTitle11 db "#           #       #  #########  #       #  #       #  #         #",0
 
 .code
 main PROC
-	
+	CALL StartScreen
+	CALL CLRSCR
 	CALL PrintBoard
 	CALL SpawnGhosts
+	mov eax, 1000
+	CALL Delay
 
-	mov ecx, 200
-	TestMove:
-		CALL PacMove
-		Loop TestMove
+	mov ecx, 1
+	Game:
+		Call Movements
+
+		inc ecx
+		Loop Game
 exit
 main ENDP
 
@@ -91,11 +129,11 @@ PrintBoard PROC
 	mov eax, 15
 	CALL SetTextColor
 	mov ecx, 31
-	mov edx, OFFSET row1 - 56
+	mov edx, OFFSET row1 - 80
 
 BoardLoop:
 	
-	ADD edx, 56
+	ADD edx, 80
 	CALL writestring
 	CALL CRLF
 
@@ -109,11 +147,6 @@ BoardLoop:
 	mov al, '<'
 	CALL writechar
 
-	;mov eax, 15
-	;CALL SetTextColor
-	;mov dl, 1
-	;mov dh, 31
-	;CALL GoTOXY
 RET 
 PrintBoard ENDP
 
@@ -130,23 +163,47 @@ SpawnGhosts PROC USES eax ecx edx
 		Call GotoXY
 		mov al, 'G'
 		Call WriteChar
-
 		add esi, 3
 		loop Spawn
-
-	mov al, GhostArray[0]
-	Call SetTextColor
-	mov dl, GhostArray[1]
 	
+	mov eax, 14
+	CALL SetTextColor		;reset Pac-Man's color
 	ret
+
 SpawnGhosts ENDP
+
+Movements PROC
+	mov eax, 150	;delay in milliseconds, smaller = faster game
+	mov ecx, 1
+
+	Speed:	
+		Call Delay
+		je Movement
+
+		inc ecx
+		loop Speed
+
+	Movement:
+	Call PacMove
+
+	ret
+Movements ENDP
+
+MoveInput PROC
+	push edx
+	Call readkey
+	pop edx
+
+	ret
+MoveInput ENDP
 
 PacMove PROC
 	mov dl, PacPosX
 	mov dh, PacPosY
 	CALL GoToXY
 	mov eax, 0
-	CALL readchar
+	CALL MoveInput
+
 	CMP ah, DirMov[0]
 	je DeltaUp
 	CMP ah, DirMov[1]
@@ -170,8 +227,8 @@ PacMove PROC
 		mov PacSymLast, 'v'
 		mov al, 'v'
 		CALL writechar
-		mov PacPosLast[1], -1 
-		mov PacPosLast[0], 0		
+		mov PacPosLastY, -1
+		mov PacPosLastX, 0		
 		jmp Moved
 	
 	DeltaDown:
@@ -187,13 +244,16 @@ PacMove PROC
 		mov PacSymLast, '^'
 		mov al, '^'
 		CALL writechar
-		mov PacPosLast[1], 1 
-		mov PacPosLast[0], 0
+		mov PacPosLastY, 1
+		mov PacPosLastX, 0
 		jmp Moved
-	
+
 	DeltaLeft:
 		mov PacCollVal, -1
 		CALL PacmanCollision
+		CALL PortalCheck
+		CMP PortalFlag, 1
+		je Moved
 		CMP CollisionFlag, 1
 		je Moved
 		SUB PacPosX, 2
@@ -204,13 +264,16 @@ PacMove PROC
 		mov PacSymLast, '>'
 		mov al, '>'
 		CALL writechar
-		mov PacPosLast[1], 0
-		mov PacPosLast[0], -1
+		mov PacPosLastY, 0
+		mov PacPosLastX, -2
 		jmp Moved
 	
 	DeltaRight:
 		mov PacCollVal, 1
 		CALL PacmanCollision
+		CALL PortalCheck
+		CMP PortalFlag, 1
+		je Moved
 		CMP CollisionFlag, 1
 		je Moved
 		ADD PacPosX,2
@@ -221,20 +284,24 @@ PacMove PROC
 		mov PacSymLast, '<'
 		mov al, '<'
 		CALL writechar
-		mov PacPosLast[1], 0
-		mov PacPosLast[0], 1
+		mov PacPosLastY, 0
+		mov PacPosLastX, 2
 		jmp Moved
 	
 	DeltaLast:
 		CALL PacmanCollision
+		CALL PortalCheck
+		CMP PortalFlag, 1
+		je Moved
 		CMP CollisionFlag, 1
-		JMP Moved
+		je Moved
 		mov al, 20h
 		CALL writechar
+		mov dx, 0
 		mov dl, PacPosX
 		mov dh, PacPosY
-		add dl, PacPosLast[0]
-		add dh, PacPosLast[1]
+		add dl, PacPosLastX
+		add dh, PacPosLastY
 		mov PacPosX, dl
 		mov PacPosY, dh
 		CALL GoToXY
@@ -242,8 +309,20 @@ PacMove PROC
 		CALL writechar
 
 Moved:
+mov PortalFlag, 0
 RET
 PacMove ENDP
+
+PrintCurrentScore PROC
+	mov edx, 0
+	mov eax, 0
+	mov dl, ScoreX
+	mov dh, ScoreY
+	CALL GoToXY
+	mov ax, Score
+	call writeString
+RET
+PrintCurrentScore endp
 
 PacmanCollision PROC USES ebx
 	mov ebx, 0
@@ -260,15 +339,18 @@ PacmanCollision PROC USES ebx
 
 	HitWall:
 		mov CollisionFlag, 1
+		call PrintCurrentScore
 		JMP ExitProcWall
 
 	HitDotSmall:
-		;add score to the variable
+		add Score, 10 
+		call PrintCurrentScore
 		mov CollisionFlag, 0
 		JMP ExitProc
 
 	HitDotBig:
-		;add score to the variable
+		add Score, 50 
+		call PrintCurrentScore
 		mov CollisionFlag, 0
 		JMP ExitProc
 
@@ -277,5 +359,584 @@ mov PacCollPos, bx
 ExitProcWall:
 RET
 PacmanCollision ENDP
+
+PortalCheck PROC
+	
+	CMP PacPosX, 0
+	je PortalLeft
+	CMP PacPosX, 54
+	je PortalRight
+	jmp EndPortal
+
+	PortalRight:
+			mov al, 20h
+			CALL writechar
+			mov PacPosX, 2
+			mov PacCollPos,393
+			mov PacCollVal, 1
+			mov dl, PacPosX
+			CALL GoToXY
+			mov PortalFlag, 1
+			mov PacSymLast, '<'
+			mov al, '<'
+			CALL writechar
+			mov PacPosLastY, 0
+			mov PacPosLastX, 2
+			jmp EndPortal
+
+	
+	PortalLeft:
+			mov al, 20h
+			CALL writechar
+			mov PacPosX, 52
+			mov PacCollPos,418
+			mov PacCollVal, -1
+			mov dl, PacPosX
+			CALL GoToXY
+			mov PortalFlag, 1
+			mov PacSymLast, '>'
+			mov al, '>'
+			CALL writechar
+			mov PacPosLastY, 0
+			mov PacPosLastX, -2
+			
+
+EndPortal:
+RET
+PortalCheck ENDP
+
+StartScreen PROC
+
+	mov eax, 15
+	CALL SetTextColor
+	CALL PrintPacPos
+	inc PrintPacX
+	mov eax,500
+	CALL Delay
+	mov al, 218
+	CALL PrintBorPos
+	inc PrintX
+	CALL PrintPacPos
+	inc PrintPacX
+
+	mov ecx, 78
+	SideOne:
+		CALL PrintPacPos
+		inc PrintPacX
+		mov al, 196
+		CALL PrintBorPos
+		inc PrintX
+		mov eax, TopBorDelay
+		CALL Delay
+		Loop SideOne
+
+	mov al, 191
+	CALL writechar
+	inc PrintY
+	add PrintPacY,2
+	dec PrintPacX
+	mov PrintPacSym, '^'
+	CALL PrintPacPos
+
+	mov ecx, 13
+	SideTwoU:
+		CALL PrintPacPos
+		inc PrintPacY
+		mov al, 179
+		CALL PrintBorPos
+		inc PrintY
+		mov eax, TopBorDelay
+		CALL Delay
+		Loop SideTwoU
+
+	mov al, 180
+	CALL PrintBorPos
+	inc PrintY
+	inc PrintPacY
+
+	mov ecx, 7
+	SideTwoM:
+		CALL PrintPacPos
+		inc PrintPacY
+		mov al, 179
+		CALL PrintBorPos
+		inc PrintY
+		mov eax, TopBorDelay
+		CALL Delay
+		Loop SideTwoM
+
+		mov al, 180
+	CALL PrintBorPos
+	inc PrintY
+	inc PrintPacY
+
+	mov ecx, 6
+	SideTwoL:
+		CALL PrintPacPos
+		inc PrintPacY
+		mov al, 179
+		CALL PrintBorPos
+		inc PrintY
+		mov eax, TopBorDelay
+		CALL Delay
+		Loop SideTwoL
+
+	mov al, 217
+	CALL PrintBorPos
+	dec PrintX
+	dec PrintPacX
+	dec PrintPacY
+	mov PrintPacSym, '>'
+	CALL PrintPacPos
+	dec PrintPacX
+
+	mov ecx, 78
+	SideThree:
+		CALL PrintPacPos
+		dec PrintPacX
+		mov al, 196
+		CALL PrintBorPos
+		dec PrintX
+		mov eax, TopBorDelay
+		CALL Delay
+		Loop SideThree
+	
+	mov al, 192
+	CALL PrintBorPos
+	dec PrintY
+	dec PrintPacY
+	inc PrintPacX
+	mov PrintPacSym, 'v'
+	CALL PrintPacPos
+	dec PrintPacY
+
+	mov ecx, 6
+	SideFourL:
+		CALL PrintPacPos
+		dec PrintPacY
+		mov al, 179
+		CALL PrintBorPos
+		dec PrintY
+		mov eax, TopBorDelay
+		CALL Delay
+		Loop SideFourL
+
+	mov al, 195
+	CALL PrintBorPos
+	dec PrintY
+	
+	mov ecx, 7
+	SideFourM:
+		CALL PrintPacPos
+		dec PrintPacY
+		mov al, 179
+		CALL PrintBorPos
+		dec PrintY
+		mov eax, TopBorDelay
+		CALL Delay
+		Loop SideFourM
+
+	mov al, 195
+	CALL PrintBorPos
+	dec PrintY
+	dec PrintPacY
+
+	mov ecx, 13
+	SideFourU:
+		CALL PrintPacPos
+		dec PrintPacY
+		mov al, 179
+		CALL PrintBorPos
+		dec PrintY
+		mov eax, TopBorDelay
+		CALL Delay
+		Loop SideFourU
+
+	mov PrintPacY, 14
+	mov PrintPacX, 1
+	mov PrintPacSym, '<'
+	CALL PrintPacPos
+	add PrintPacY, 8
+	CALL PrintPacPos
+	inc PrintPacX
+	mov PrintX, 1
+	mov PrintY, 22
+	 
+	mov ecx, 77
+	TwoLines:
+		mov al, 196
+		CALL PrintBorPos
+		sub PrintY, 8
+		CALL PrintBorPos
+		inc PrintX
+		add PrintY, 8
+		CALL PrintPacPos
+		sub PrintPacY, 8
+		CALL PrintPacPos
+		add PrintPacY, 8
+		inc PrintPacX
+		mov eax, TopBorDelay
+		CALL Delay
+		Loop TwoLines
+
+	mov al, 196
+	CALL PrintBorPos
+	sub PrintY, 8
+	CALL PrintBorPos
+	CALL PrintTitle
+RET
+StartScreen ENDP
+PrintPacPos PROC
+
+	mov dh, PrintPacY
+	mov dl, PrintPacX
+	mov al, PrintPacSym
+	CALL GoToXY
+	CALL writechar
+
+RET
+PrintPacPos ENDP
+
+PrintBorPos PROC
+
+	mov dh, PrintY
+	mov dl, PrintX
+	CALL GoToXY
+	CALL writechar
+
+RET
+PrintBorPos ENDP
+
+PrintTitle PROC uses edx ecx
+	
+	mov edx, 0
+	mov ecx, 11
+	mov PrintX, 6
+	mov PrintY, 2
+
+	TitleLoop:
+		mov dh, PrintY
+		mov dl, PrintX
+		CALL GoToXY
+		CALL PrintLine
+		inc PrintY
+		add LinePos, 68
+		CALL GoToXY
+		mov eax, 50
+		CALL Delay
+		Loop TitleLoop
+		
+		CALL StarringAnimation
+RET
+PrintTitle ENDP
+
+PrintLine PROC uses ecx
+	mov eax, 14
+	CALL SetTextColor
+	mov ecx, 68
+	mov esi, LinePos
+	TitleLoop:
+		mov al, PacmanTitle1[esi]
+		CALL writechar
+		inc esi
+		Loop TitleLoop
+
+
+RET
+PrintLine ENDP
+
+StarringAnimation PROC
+	
+	mov eax, 15
+	CALL SetTextColor
+	mov eax, 500
+	CALL Delay
+	mov edx, 0
+	mov dh, 17
+	mov dl, 36
+	CALL GoToXY
+	mov edx, OFFSET StarMess
+	CALL writestring
+	CALL Delay
+	
+	CALL GhostAnimations
+	CALL PacAnimation
+	CALL InputMessage
+
+RET
+StarringAnimation ENDP
+
+PacAnimation PROC uses ecx
+	
+	mov eax, 15
+	CALL SetTextColor
+	mov dh, 18
+	mov dl, 20
+	mov al, 'o'
+	CALL GoToXY
+	CALL writechar
+	mov eax, 14
+	CALL SetTextColor
+	mov dh, 17
+	mov dl, 0
+	CALL GoToXY
+	mov al, " "
+	CALL Writechar
+	mov dh, 18
+	mov dl, 0
+	CALL GoToXY
+	mov al, " "
+	CALL Writechar
+	mov dh, 19
+	mov dl, 0
+	CALL GoToXY
+	mov al, " "
+	CALL Writechar
+	mov eax, 300
+	CALL Delay
+	mov dh, 18
+	mov dl, 0
+	CALL GoToXY
+	mov al, "<"
+	CALL Writechar
+	mov eax, 500
+	CALL Delay
+
+	mov PrintX, 0
+	mov PrintY, 18
+	mov ecx,20
+	MovingPacL:
+		mov dh, PrintY
+		mov dl, PrintX
+		mov al, ' '
+		CALL GoToXY
+		CALL writechar
+		inc PrintX
+		mov dl, PrintX
+		mov dh, PrintY
+		mov al, '<'
+		CALL GoToXY
+		CALL writechar
+		mov eax, 50
+		CALL Delay
+		Loop MovingPacL
+	
+	mov eax, 9
+	CALL SetTextColor
+	mov dh, 18
+	mov dl, 39
+	CALL GoToXY
+	mov al, 'G'
+	CALL writechar
+	mov eax, 14
+	CALL SetTextColor
+	mov eax, 300
+	CALL Delay
+
+	mov ecx,19
+	MovingPacR:
+		mov dh, PrintY
+		mov dl, PrintX
+		mov al, ' '
+		CALL GoToXY
+		CALL writechar
+		inc PrintX
+		mov dl, PrintX
+		mov dh, PrintY
+		mov al, '<'
+		CALL GoToXY
+		CALL writechar
+		mov eax, 50
+		CALL Delay
+		Loop MovingPacR
+
+	mov ecx, 4
+	SpinPac:
+		mov dh, 18
+		mov dl, 39
+		CALL GoToXY
+		mov eax, 50
+		CALL Delay
+		mov al, 'v'
+		CALL writechar
+		mov dh, 18
+		mov dl, 39
+		CALL GoToXY
+		mov eax, 50
+		CALL Delay
+		mov al, '>'
+		CALL writechar
+		mov dh, 18
+		mov dl, 39
+		CALL GoToXY
+		mov eax, 50
+		CALL Delay
+		mov al, '^'
+		CALL writechar
+		mov dh, 18
+		mov dl, 39
+		CALL GoToXY
+		mov eax, 50
+		CALL Delay
+		mov al, '<'
+		CALL writechar
+		Loop SpinPac
+
+	mov dh, 19
+	mov dl, 37 
+	CALL GoToXY
+	mov edx, OFFSET PacMess
+	mov eax, 700
+	CALL Delay
+	CALL writestring
+	mov eax, 600
+	CALL Delay
+
+RET
+PacAnimation ENDP
+
+GhostAnimations PROC
+
+	CALL BlinkyStar
+	CALL PinkyStar
+	CALL InkyStar
+	CALL ClydeStar
+
+RET
+GhostAnimations ENDP 
+
+BlinkyStar PROC
+
+	mov eax, 12
+	CALL SetTextColor
+	mov dh, 19
+	mov dl, 37
+	CALL GoToXY
+	mov edx, OFFSET ClrMess
+	CALL writestring
+	mov dh, 18
+	mov dl, 39
+	CALL GoToXY
+	mov al, 'G'
+	CALL writechar
+	mov eax, 500
+	mov dh, 19
+	mov dl, 37
+	CALL GoToXY
+	mov eax, 500
+	CALL Delay
+	mov edx, OFFSET Blinky
+	CALL writestring
+	mov eax, 500
+	CALL Delay
+
+RET
+BlinkyStar ENDP
+
+PinkyStar PROC
+
+	mov eax, 13
+	CALL SetTextColor
+	mov dh, 19
+	mov dl, 37
+	CALL GoToXY
+	mov edx, OFFSET ClrMess
+	CALL writestring
+	mov dh, 18
+	mov dl, 39
+	CALL GoToXY
+	mov al, 'G'
+	CALL writechar
+	mov eax, 500
+	mov dh, 19
+	mov dl, 37
+	CALL GoToXY
+	mov eax, 500
+	CALL Delay
+	mov edx, OFFSET Pinky
+	CALL writestring
+	mov eax, 500
+	CALL Delay
+
+RET
+PinkyStar ENDP
+
+InkyStar PROC
+
+	mov eax, 11
+	CALL SetTextColor
+	mov dh, 19
+	mov dl, 37
+	CALL GoToXY
+	mov edx, OFFSET ClrMess
+	CALL writestring
+	mov dh, 18
+	mov dl, 39
+	CALL GoToXY
+	mov al, 'G'
+	CALL writechar
+	mov eax, 500
+	mov dh, 19
+	mov dl, 38
+	CALL GoToXY
+	mov eax, 500
+	CALL Delay
+	mov edx, OFFSET Inky
+	CALL writestring
+	mov eax, 500
+	CALL Delay
+
+RET
+InkyStar ENDP
+
+ClydeStar PROC
+
+	mov eax, 14
+	CALL SetTextColor
+	mov dh, 19
+	mov dl, 37
+	CALL GoToXY
+	mov edx, OFFSET ClrMess
+	CALL writestring
+	mov dh, 18
+	mov dl, 39
+	CALL GoToXY
+	mov al, 'G'
+	CALL writechar
+	mov eax, 500
+	mov dh, 19
+	mov dl, 37
+	CALL GoToXY
+	mov eax, 500
+	CALL Delay
+	mov edx, OFFSET Clyde
+	CALL writestring
+	mov eax, 500
+	CALL Delay
+	mov dh, 19
+	mov dl, 37
+	CALL GoToXY
+	mov edx, OFFSET ClrMess
+	CALL writestring
+
+RET
+ClydeStar ENDP
+
+InputMessage PROC uses edx
+
+mov eax, 15
+CALL SetTextColor
+mov dh,25
+mov dl, 24
+CALL GoToXY 
+mov edx, OFFSET DirKeyMess
+CALL writestring
+mov dh,27
+mov dl, 24
+CALL GoToXY 
+mov eax, 1750
+CALL Delay
+RET
+InputMessage ENDP
 
 END main
