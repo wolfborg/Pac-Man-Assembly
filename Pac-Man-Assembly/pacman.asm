@@ -1,6 +1,7 @@
-;Title
-;Contributors
+;Title: Pacman in Assembly
+;Contributors: Jordan Williams, Derek Chaplin, Cam Mielbye
 INCLUDE Irvine/Irvine32.inc
+
 .data
 PortalFlag db 0
 MoveTimeStart dd 0
@@ -383,6 +384,9 @@ PortalCheck PROC
 	jmp EndPortal
 
 	PortalRight:
+			mov dh, PacPosY
+			mov dl, PacPosX
+			CALL GoToXY
 			mov al, 20h
 			CALL writechar
 			mov PacPosX, 2
@@ -397,9 +401,11 @@ PortalCheck PROC
 			mov PacPosLastY, 0
 			mov PacPosLastX, 2
 			jmp EndPortal
-
 	
 	PortalLeft:
+			mov dh, PacPosY
+			mov dl, PacPosX
+			CALL GoToXY
 			mov al, 20h
 			CALL writechar
 			mov PacPosX, 52
