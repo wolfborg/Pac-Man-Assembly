@@ -1,6 +1,7 @@
-;Title
-;Contributors
+;Title: Pacman in Assembly
+;Contributors: Jordan Williams, Derek Chaplin, Cam Mielbye
 INCLUDE Irvine/Irvine32.inc
+
 .data
 PortalFlag db 0
 MoveTimeStart dd 0
@@ -15,6 +16,9 @@ PacSymLast db '<'
 PacCollVal dw 1
 PacCollValLast dw 2
 PacCollPos dw 657
+ScoreX db 63
+ScoreY db 4
+Score dw 0
 boardArray  db '############################', 
 			   '#............##............#', 
 			   '#.####.#####.##.#####.####.#', 
@@ -47,35 +51,35 @@ boardArray  db '############################',
 			   '#..........................#', 
 			   '############################'
 row1  db "# # # # # # # # # # # # # # # # # # # # # # # # # # # #    ___________________ ",0
-row2  db "# . . . . . . . . . . . . # # . . . . . . . . . . . . #   |    < Scores >     |",0  
-row3  db "# . # # # # . # # # # # . # # . # # # # # . # # # # . #   |    1:             |",0  ;67 is the position in each line where the score will be placed
-row4  db "# o # # # # . # # # # # . # # . # # # # # . # # # # o #   |    2:             |",0  ;72 for the High score line
-row5  db "# . # # # # . # # # # # . # # . # # # # # . # # # # . #   |    3:             |",0  
-row6  db "# . . . . . . . . . . . . . . . . . . . . . . . . . . #   |    4:             |",0  
-row7  db "# . # # # # . # # . # # # # # # # # . # # . # # # # . #   |    5:             |",0  
-row8  db "# . # # # # . # # . # # # # # # # # . # # . # # # # . #   |    6:             |",0  
-row9  db "# . . . . . . # # . . . . # # . . . . # # . . . . . . #   |    7:             |",0  
-row10 db "# # # # # # . # # # # #   # #   # # # # # . # # # # # #   |    8:             |",0  
-row11 db "# # # # # # . # # # # #   # #   # # # # # . # # # # # #   |    9:             |",0  
-row12 db "# # # # # # . # #                     # # . # # # # # #   |   10:             |",0  
-row13 db "# # # # # # . # #   # # # - - # # #   # # . # # # # # #   |   11:             |",0  
-row14 db "# # # # # # . # #   #             #   # # . # # # # # #   |   12:             |",0  
-row15 db "            .       #             #       .               |   13:             |",0  
-row16 db "# # # # # # . # #   #             #   # # . # # # # # #   |   14:             |",0  
-row17 db "# # # # # # . # #   # # # # # # # #   # # . # # # # # #   |   15:             |",0  
-row18 db "# # # # # # . # #                     # # . # # # # # #   |   16:             |",0  
-row19 db "# # # # # # . # #   # # # # # # # #   # # . # # # # # #   |   17:             |",0 
-row20 db "# # # # # # . # #   # # # # # # # #   # # . # # # # # #   |   18:             |",0  
-row21 db "# . . . . . . . . . . . . # # . . . . . . . . . . . . #   |   19:             |",0  
-row22 db "# . # # # # . # # # # # . # # . # # # # # . # # # # . #   |   20:             |",0  
-row23 db "# . # # # # . # # # # # . # # . # # # # # . # # # # . #   |   21:             |",0  
-row24 db "# o . . # # . . . . . . .     . . . . . . . # # . . o #   |   22:             |",0  
-row25 db "# # # . # # . # # . # # # # # # # # . # # . # # . # # #   |   23:             |",0  
-row26 db "# # # . # # . # # . # # # # # # # # . # # . # # . # # #   |   24:             |",0  
-row27 db "# . . . . . . # # . . . . . . . . . . # # . . . . . . #   |   25:             |",0 
+row2  db "# . . . . . . . . . . . . # # . . . . . . . . . . . . #   |                   |",0  
+row3  db "# . # # # # . # # # # # . # # . # # # # # . # # # # . #   |  <Current Score>  |",0  
+row4  db "# o # # # # . # # # # # . # # . # # # # # . # # # # o #   |                   |",0  
+row5  db "# . # # # # . # # # # # . # # . # # # # # . # # # # . #   |    -              |",0  ;64 for current score
+row6  db "# . . . . . . . . . . . . . . . . . . . . . . . . . . #   |___________________|",0  
+row7  db "# . # # # # . # # . # # # # # # # # . # # . # # # # . #   |                   |",0  
+row8  db "# . # # # # . # # . # # # # # # # # . # # . # # # # . #   |   <Past Scores>   |",0  
+row9  db "# . . . . . . # # . . . . # # . . . . # # . . . . . . #   |                   |",0  
+row10 db "# # # # # # . # # # # #   # #   # # # # # . # # # # # #   |   1:              |",0  ;64 for past scores
+row11 db "# # # # # # . # # # # #   # #   # # # # # . # # # # # #   |   2:              |",0  
+row12 db "# # # # # # . # #                     # # . # # # # # #   |   3:              |",0  
+row13 db "# # # # # # . # #   # # # - - # # #   # # . # # # # # #   |   4:              |",0  
+row14 db "# # # # # # . # #   #             #   # # . # # # # # #   |   5:              |",0  
+row15 db "            .       #             #       .               |   6:              |",0  
+row16 db "# # # # # # . # #   #             #   # # . # # # # # #   |   7:              |",0  
+row17 db "# # # # # # . # #   # # # # # # # #   # # . # # # # # #   |   8:              |",0  
+row18 db "# # # # # # . # #                     # # . # # # # # #   |   9:              |",0  
+row19 db "# # # # # # . # #   # # # # # # # #   # # . # # # # # #   |  10:              |",0 
+row20 db "# # # # # # . # #   # # # # # # # #   # # . # # # # # #   |  11:              |",0  
+row21 db "# . . . . . . . . . . . . # # . . . . . . . . . . . . #   |  12:              |",0  
+row22 db "# . # # # # . # # # # # . # # . # # # # # . # # # # . #   |  13:              |",0  
+row23 db "# . # # # # . # # # # # . # # . # # # # # . # # # # . #   |  14:              |",0  
+row24 db "# o . . # # . . . . . . .     . . . . . . . # # . . o #   |  15:              |",0  
+row25 db "# # # . # # . # # . # # # # # # # # . # # . # # . # # #   |___________________|",0  
+row26 db "# # # . # # . # # . # # # # # # # # . # # . # # . # # #   |                   |",0  
+row27 db "# . . . . . . # # . . . . . . . . . . # # . . . . . . #   |   <High Score>    |",0 
 row28 db "# . # # # # # # # # # # . # # . # # # # # # # # # # . #   |                   |",0 
-row29 db "# . # # # # # # # # # # . # # . # # # # # # # # # # . #   |                   |",0 
-row30 db "# . . . . . . . . . . . . . . . . . . . . . . . . . . #   |HIGH SCORE:        |",0 
+row29 db "# . # # # # # # # # # # . # # . # # # # # # # # # # . #   |    -              |",0  ;64 for High score
+row30 db "# . . . . . . . . . . . . . . . . . . . . . . . . . . #   |                   |",0 
 row31 db "# # # # # # # # # # # # # # # # # # # # # # # # # # # #   |___________________|",0 
 LinePos dd 0
 PrintX db 0
@@ -119,7 +123,6 @@ main PROC
 
 		inc ecx
 		Loop Game
-
 exit
 main ENDP
 
@@ -161,14 +164,13 @@ SpawnGhosts PROC USES eax ecx edx
 		Call GotoXY
 		mov al, 'G'
 		Call WriteChar
-
 		add esi, 3
 		loop Spawn
 	
 	mov eax, 14
 	CALL SetTextColor		;reset Pac-Man's color
-
 	ret
+
 SpawnGhosts ENDP
 
 Movements PROC
@@ -218,9 +220,12 @@ PacMove PROC
 		CALL PacmanCollision
 		CMP CollisionFlag, 1
 		je Moved
-		dec PacPosY
+		mov dh, PacPosY
+		mov dl, PacPosX
+		CALL GoToXY
 		mov al, 20h
 		CALL writechar
+		dec PacPosY
 		mov dh, PacPosY
 		CALL GoToXY
 		mov PacSymLast, 'v'
@@ -235,9 +240,12 @@ PacMove PROC
 		CALL PacmanCollision
 		CMP CollisionFlag, 1
 		je Moved
-		inc PacPosY
+		mov dh, PacPosY
+		mov dl, PacPosX
+		CALL GoToXY
 		mov al, 20h
 		CALL writechar
+		inc PacPosY
 		mov dh, PacPosY
 		CALL GoToXY
 		mov PacSymLast, '^'
@@ -255,9 +263,12 @@ PacMove PROC
 		je Moved
 		CMP CollisionFlag, 1
 		je Moved
-		SUB PacPosX, 2
+		mov dh, PacPosY
+		mov dl, PacPosX
+		CALL GoToXY
 		mov al, 20h
 		CALL writechar
+		SUB PacPosX, 2
 		mov dl, PacPosX
 		CALL GoToXY
 		mov PacSymLast, '>'
@@ -275,9 +286,12 @@ PacMove PROC
 		je Moved
 		CMP CollisionFlag, 1
 		je Moved
-		ADD PacPosX,2
+		mov dh, PacPosY
+		mov dl, PacPosX
+		CALL GoToXY
 		mov al, 20h
 		CALL writechar
+		ADD PacPosX,2
 		mov dl, PacPosX
 		CALL GoToXY
 		mov PacSymLast, '<'
@@ -294,11 +308,11 @@ PacMove PROC
 		je Moved
 		CMP CollisionFlag, 1
 		je Moved
-		mov al, 20h
-		CALL writechar
-		mov dx, 0
 		mov dl, PacPosX
 		mov dh, PacPosY
+		CALL GoToXY
+		mov al, 20h
+		CALL writechar
 		add dl, PacPosLastX
 		add dh, PacPosLastY
 		mov PacPosX, dl
@@ -309,8 +323,20 @@ PacMove PROC
 
 Moved:
 mov PortalFlag, 0
+
 RET
 PacMove ENDP
+
+PrintCurrentScore PROC
+	mov edx, 0
+	mov eax, 0
+	mov dl, ScoreX
+	mov dh, ScoreY
+	CALL GoToXY
+	mov ax, Score
+	call writedec
+RET
+PrintCurrentScore endp
 
 PacmanCollision PROC USES ebx
 	mov ebx, 0
@@ -327,20 +353,24 @@ PacmanCollision PROC USES ebx
 
 	HitWall:
 		mov CollisionFlag, 1
+		call PrintCurrentScore
 		JMP ExitProcWall
 
 	HitDotSmall:
-		;add score to the variable
+		add Score, 10 
+		call PrintCurrentScore
 		mov CollisionFlag, 0
 		JMP ExitProc
 
 	HitDotBig:
-		;add score to the variable
+		add Score, 50 
+		call PrintCurrentScore
 		mov CollisionFlag, 0
 		JMP ExitProc
 
 ExitProc:
 mov PacCollPos, bx
+mov boardArray[bx],0
 ExitProcWall:
 RET
 PacmanCollision ENDP
@@ -354,6 +384,9 @@ PortalCheck PROC
 	jmp EndPortal
 
 	PortalRight:
+			mov dh, PacPosY
+			mov dl, PacPosX
+			CALL GoToXY
 			mov al, 20h
 			CALL writechar
 			mov PacPosX, 2
@@ -368,9 +401,11 @@ PortalCheck PROC
 			mov PacPosLastY, 0
 			mov PacPosLastX, 2
 			jmp EndPortal
-
 	
 	PortalLeft:
+			mov dh, PacPosY
+			mov dl, PacPosX
+			CALL GoToXY
 			mov al, 20h
 			CALL writechar
 			mov PacPosX, 52
