@@ -6,7 +6,10 @@ INCLUDE Irvine/Irvine32.inc
 PortalFlag db 0
 MoveTimeStart dd 0
 CollisionFlag db 0
-DirMov BYTE 48h,50h,4Bh,4Dh
+UPARROW BYTE 48h
+DOWNARROW BYTE 50h
+LEFTARROW BYTE 4Bh
+RIGHTARROW BYTE 4Dh
 PacPosX db 26
 PacPosY db 23
 GhostArray db 0Ch,23,14,0Bh,25,14,0Dh,28,14,0Eh,30,14
@@ -151,27 +154,95 @@ BoardLoop:
 RET 
 PrintBoard ENDP
 
-SpawnGhosts PROC USES eax ecx edx
+.data
+GhostColors db 0Ch, 0Bh, 0Dh, 0Eh
+GhostXs db 23, 25, 28, 30
+GhostYs db 14, 14, 14, 14
+GhostDirs db 0, 0, 0, 0
+GhostSpawn db 1, 1, 1, 1	;used to check if Ghost is in spawn zone
+
+.code
+SpawnGhosts PROC USES eax ecx esi
 	mov eax, 0
 	mov ecx, 4
-	mov esi, offset GhostArray
+	mov esi, 0
 
 	Spawn:
-		mov al, [esi]
-		Call SetTextColor
-		mov dl, [esi+1]
-		mov dh, [esi+2]
-		Call GotoXY
-		mov al, 'G'
-		Call WriteChar
-		add esi, 3
+		Call GhostUpdate
+		inc esi
 		loop Spawn
 	
 	mov eax, 14
-	CALL SetTextColor		;reset Pac-Man's color
+	Call SetTextColor		;reset Pac-Man's color
+
+	ret
+SpawnGhosts ENDP
+
+;Uses ESI value to update a ghost
+GhostUpdate PROC
+	mov al, GhostColors[esi]
+	Call SetTextColor
+	mov dl, GhostXs[esi]
+	mov dh, GhostYs[esi]
+	Call GotoXY
+	mov al, 'G'
+	Call WriteChar
+
+ret
+GhostUpdate ENDP
+
+GhostMove PROC USES eax ecx edx esi
+	mov eax, 0
+	mov ecx, 4
+	mov esi, 0
+
+	Move:
+		mov al, GhostSpawn[esi]
+		cmp al, 1
+		je SpawnMove
+		mov eax, 0
+		push esi
+
+		;spawn
+		SpawnMove:
+			cmp esi, 0
+			je RedSpawn
+			cmp esi, 1
+			je BlueSpawn
+			cmp esi, 2
+			je PinkSpawn
+			cmp esi, 3
+			je OrangeSpawn
+			jmp RegularMove
+
+		RedSpawn:
+		inc GhostXs[esi]
+
+		;Call GhostUpdate
+
+		BlueSpawn:
+
+		PinkSpawn:
+		
+		OrangeSpawn:
+
+
+		;directions:
+		;0 = up
+		;1 = down
+		;2 = left
+		;3 = right
+
+		RegularMove:
+
+		loop Move
+
+	Moved:
+	mov eax, 14
+	Call SetTextColor		;reset Pac-Man's color
 	ret
 
-SpawnGhosts ENDP
+GhostMove ENDP
 
 Movements PROC
 	mov eax, 150	;delay in milliseconds, smaller = faster game
@@ -186,6 +257,7 @@ Movements PROC
 
 	Movement:
 	Call PacMove
+	Call GhostMove
 
 	ret
 Movements ENDP
@@ -205,13 +277,13 @@ PacMove PROC
 	mov eax, 0
 	CALL MoveInput
 
-	CMP ah, DirMov[0]
+	CMP ah, UPARROW
 	je DeltaUp
-	CMP ah, DirMov[1]
+	CMP ah, DOWNARROW
 	je DeltaDown
-	CMP ah, DirMov[2]
+	CMP ah, LEFTARROW
 	je DeltaLeft
-	CMP ah, DirMov[3]
+	CMP ah, RIGHTARROW
 	je DeltaRight
 	jmp DeltaLast
 
