@@ -3,6 +3,9 @@
 INCLUDE Irvine/Irvine32.inc
 
 .data
+StartTime dd ?
+EndGameFlag db 0
+DotsGoneFlag db 246
 PortalFlag db 0
 MoveTimeStart dd 0
 CollisionFlag db 0
@@ -22,6 +25,8 @@ PacCollPos dw 657
 ScoreX db 63
 ScoreY db 4
 Score dw 0
+NoMoreFruit dd 0
+FruitTime dd 0
 boardArray  db '############################', 
 			   '#............##............#', 
 			   '#.####.#####.##.#####.####.#', 
@@ -113,19 +118,25 @@ PacmanTitle11 db "#           #       #  #########  #       #  #       #  #     
 
 .code
 main PROC
-	CALL StartScreen
+	;CALL StartScreen
 	CALL CLRSCR
 	CALL PrintBoard
 	CALL SpawnGhosts
 	mov eax, 1000
 	CALL Delay
 
-	mov ecx, 1
+	mov eax, 0
+	CALL GetMSeconds
+	mov StartTime,eax
+
 	Game:
 		Call Movements
+		CALL CheckFruit
+		CALL CheckEndGame
+		CALL CheckTime
+		CMP EndGameFlag, 1
+		jne Game
 
-		inc ecx
-		Loop Game
 exit
 main ENDP
 
@@ -420,6 +431,8 @@ PacmanCollision PROC USES ebx
 	je HitDotSmall
 	CMP boardArray[bx], 'o'
 	je HitDotBig
+	CMP boardArray[bx], 'F'
+	je HitFruit
 	mov CollisionFlag, 0
 	JMP ExitProc
 
@@ -431,12 +444,25 @@ PacmanCollision PROC USES ebx
 	HitDotSmall:
 		add Score, 10 
 		call PrintCurrentScore
+		dec DotsGoneFlag
 		mov CollisionFlag, 0
 		JMP ExitProc
 
 	HitDotBig:
 		add Score, 50 
 		call PrintCurrentScore
+		dec DotsGoneFlag
+		mov CollisionFlag, 0
+		JMP ExitProc
+
+	HitFruit:
+		add Score, 200 
+		call PrintCurrentScore
+		mov dh, 23
+		mov dl, 28
+		CALL GoToXY
+		mov al, ' '
+		mov boardArray[658], 0
 		mov CollisionFlag, 0
 		JMP ExitProc
 
@@ -1031,4 +1057,61 @@ CALL Delay
 RET
 InputMessage ENDP
 
+CheckEndGame PROC
+
+	CMP DotsGoneFlag, 0
+	je EndGame
+	jmp ContinueGame
+
+	EndGame:
+		mov EndGameFlag, 1
+
+	ContinueGame:
+
+RET
+CheckEndGame ENDP
+
+CheckFruit PROC
+	
+	CMP FruitTime, 1
+	je YesFruit
+	CMP DotsGoneFlag, 123
+	jne NoFruit
+	
+	YesFruit:
+		mov dh, 23
+		mov dl, 28
+		CALL GoToXY
+		mov eax, 10
+		CALL SetTextColor
+		mov al, 235
+		CALL writechar
+		mov boardArray[658], 'F'
+		mov eax, 14
+		CALL SetTextColor
+		mov NoMoreFruit, 1
+		mov FruitTime, 2
+
+NoFruit:
+RET
+CheckFruit ENDP
+
+CheckTime PROC
+
+	CALL GetMSeconds
+	sub eax, StartTime
+
+	CMP eax, 60000
+	jge FruitFlag
+	jmp DoneTime
+	
+	FruitFlag:
+		CMP FruitTime, 2
+		je DoneTime
+		mov FruitTime, 1
+		jmp DoneTime
+
+DoneTime:
+RET
+CheckTime ENDP
 END main
