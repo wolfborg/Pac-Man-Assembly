@@ -3,6 +3,8 @@
 INCLUDE Irvine/Irvine32.inc
 
 .data
+BigDotTime dd ?
+EatGhostsFlag db 0
 StartTime dd ?
 EndGameFlag db 0
 DotsGoneFlag db 246
@@ -118,7 +120,7 @@ PacmanTitle11 db "#           #       #  #########  #       #  #       #  #     
 
 .code
 main PROC
-	;CALL StartScreen
+	CALL StartScreen
 	CALL CLRSCR
 	CALL PrintBoard
 	CALL SpawnGhosts
@@ -453,6 +455,11 @@ PacmanCollision PROC USES ebx
 		call PrintCurrentScore
 		dec DotsGoneFlag
 		mov CollisionFlag, 0
+		mov eax, 0
+		CALL GetMSeconds
+		mov BigDotTime, eax
+		mov EatGhostsFlag, 1
+		CALL BigDotEffect
 		JMP ExitProc
 
 	HitFruit:
@@ -704,6 +711,7 @@ StartScreen PROC
 	CALL PrintTitle
 RET
 StartScreen ENDP
+
 PrintPacPos PROC
 
 	mov dh, PrintPacY
@@ -1099,10 +1107,14 @@ CheckFruit ENDP
 CheckTime PROC
 
 	CALL GetMSeconds
+	mov ebx, eax
 	sub eax, StartTime
+	sub ebx, BigDotTime
 
 	CMP eax, 60000
 	jge FruitFlag
+	CMP ebx, 10000
+	jge GhostRevert
 	jmp DoneTime
 	
 	FruitFlag:
@@ -1111,7 +1123,52 @@ CheckTime PROC
 		mov FruitTime, 1
 		jmp DoneTime
 
+	GhostRevert:
+		mov EatGhostsFlag,0
+		CALL BigDotEffect
+
 DoneTime:
 RET
 CheckTime ENDP
+
+BigDotEffect PROC
+	
+	mov esi, OFFSET GhostArray
+	mov ecx, 4
+	CMP EatGhostsFlag, 1
+	je Edible
+	jmp Deadly
+
+	Edible:
+		inc esi
+		mov eax, 9
+		CALL SetTextColor
+		mov al, 'G'
+		mov dl, [esi]
+		inc esi
+		mov dh, [esi]
+		CALL GoToXY
+		CALL writechar
+		inc esi
+		Loop Edible
+		jmp BigDotDone
+		 
+	Deadly:
+		mov eax, [esi]
+		CALL SetTextColor
+		inc esi
+		mov al, 'G'
+		mov dl, [esi]
+		inc esi
+		mov dh, [esi]
+		inc esi
+		CALL GoToXY
+		CALL writechar
+		Loop Deadly
+		
+BigDotDone:
+mov eax, 14
+CALL SetTextColor
+RET
+BigDotEffect ENDP
 END main
