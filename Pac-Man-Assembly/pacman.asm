@@ -3,6 +3,11 @@
 INCLUDE Irvine/Irvine32.inc
 
 .data
+BigDotTime dd ?
+EatGhostsFlag db 0
+StartTime dd ?
+EndGameFlag db 0
+DotsGoneFlag db 246
 PortalFlag db 0
 MoveTimeStart dd 0
 CollisionFlag db 0
@@ -22,6 +27,8 @@ PacCollPos dw 657
 ScoreX db 63
 ScoreY db 4
 Score dw 0
+NoMoreFruit dd 0
+FruitTime dd 0
 boardArray  db '############################', 
 			   '#............##............#', 
 			   '#.####.#####.##.#####.####.#', 
@@ -120,12 +127,18 @@ main PROC
 	mov eax, 1000
 	CALL Delay
 
-	mov ecx, 1
+	mov eax, 0
+	CALL GetMSeconds
+	mov StartTime,eax
+
 	Game:
 		Call Movements
+		CALL CheckFruit
+		CALL CheckEndGame
+		CALL CheckTime
+		CMP EndGameFlag, 1
+		jne Game
 
-		inc ecx
-		Loop Game
 exit
 main ENDP
 
@@ -420,6 +433,8 @@ PacmanCollision PROC USES ebx
 	je HitDotSmall
 	CMP boardArray[bx], 'o'
 	je HitDotBig
+	CMP boardArray[bx], 'F'
+	je HitFruit
 	mov CollisionFlag, 0
 	JMP ExitProc
 
@@ -431,12 +446,30 @@ PacmanCollision PROC USES ebx
 	HitDotSmall:
 		add Score, 10 
 		call PrintCurrentScore
+		dec DotsGoneFlag
 		mov CollisionFlag, 0
 		JMP ExitProc
 
 	HitDotBig:
 		add Score, 50 
 		call PrintCurrentScore
+		dec DotsGoneFlag
+		mov CollisionFlag, 0
+		mov eax, 0
+		CALL GetMSeconds
+		mov BigDotTime, eax
+		mov EatGhostsFlag, 1
+		CALL BigDotEffect
+		JMP ExitProc
+
+	HitFruit:
+		add Score, 200 
+		call PrintCurrentScore
+		mov dh, 23
+		mov dl, 28
+		CALL GoToXY
+		mov al, ' '
+		mov boardArray[658], 0
 		mov CollisionFlag, 0
 		JMP ExitProc
 
@@ -678,6 +711,7 @@ StartScreen PROC
 	CALL PrintTitle
 RET
 StartScreen ENDP
+
 PrintPacPos PROC
 
 	mov dh, PrintPacY
@@ -1031,4 +1065,110 @@ CALL Delay
 RET
 InputMessage ENDP
 
+CheckEndGame PROC
+
+	CMP DotsGoneFlag, 0
+	je EndGame
+	jmp ContinueGame
+
+	EndGame:
+		mov EndGameFlag, 1
+
+	ContinueGame:
+
+RET
+CheckEndGame ENDP
+
+CheckFruit PROC
+	
+	CMP FruitTime, 1
+	je YesFruit
+	CMP DotsGoneFlag, 123
+	jne NoFruit
+	
+	YesFruit:
+		mov dh, 23
+		mov dl, 28
+		CALL GoToXY
+		mov eax, 10
+		CALL SetTextColor
+		mov al, 235
+		CALL writechar
+		mov boardArray[658], 'F'
+		mov eax, 14
+		CALL SetTextColor
+		mov NoMoreFruit, 1
+		mov FruitTime, 2
+
+NoFruit:
+RET
+CheckFruit ENDP
+
+CheckTime PROC
+
+	CALL GetMSeconds
+	mov ebx, eax
+	sub eax, StartTime
+	sub ebx, BigDotTime
+
+	CMP eax, 60000
+	jge FruitFlag
+	CMP ebx, 10000
+	jge GhostRevert
+	jmp DoneTime
+	
+	FruitFlag:
+		CMP FruitTime, 2
+		je DoneTime
+		mov FruitTime, 1
+		jmp DoneTime
+
+	GhostRevert:
+		mov EatGhostsFlag,0
+		CALL BigDotEffect
+
+DoneTime:
+RET
+CheckTime ENDP
+
+BigDotEffect PROC
+	
+	mov esi, OFFSET GhostArray
+	mov ecx, 4
+	CMP EatGhostsFlag, 1
+	je Edible
+	jmp Deadly
+
+	Edible:
+		inc esi
+		mov eax, 9
+		CALL SetTextColor
+		mov al, 'G'
+		mov dl, [esi]
+		inc esi
+		mov dh, [esi]
+		CALL GoToXY
+		CALL writechar
+		inc esi
+		Loop Edible
+		jmp BigDotDone
+		 
+	Deadly:
+		mov eax, [esi]
+		CALL SetTextColor
+		inc esi
+		mov al, 'G'
+		mov dl, [esi]
+		inc esi
+		mov dh, [esi]
+		inc esi
+		CALL GoToXY
+		CALL writechar
+		Loop Deadly
+		
+BigDotDone:
+mov eax, 14
+CALL SetTextColor
+RET
+BigDotEffect ENDP
 END main
