@@ -17,7 +17,7 @@ LEFTARROW BYTE 4Bh
 RIGHTARROW BYTE 4Dh
 PacPosX db 26
 PacPosY db 23
-GhostArray db 0Ch,23,14,0Bh,25,14,0Dh,28,14,0Eh,30,14
+;GhostArray db 0Ch,23,14,0Bh,25,14,0Dh,28,14,0Eh,30,14
 PacPosLastX db 2
 PacPosLastY db 0
 PacSymLast db '<'
@@ -120,7 +120,7 @@ PacmanTitle11 db "#           #       #  #########  #       #  #       #  #     
 
 .code
 main PROC
-	CALL StartScreen
+	;CALL StartScreen
 	CALL CLRSCR
 	CALL PrintBoard
 	CALL SpawnGhosts
@@ -171,28 +171,17 @@ PrintBoard ENDP
 GhostColors db 0Ch, 0Bh, 0Dh, 0Eh
 GhostXs db 23, 25, 28, 30
 GhostYs db 14, 14, 14, 14
+GhostCollisions dw 303, 303, 303, 303
 GhostDirs db 0, 0, 0, 0
 GhostSpawn db 1, 1, 1, 1	;used to check if Ghost is in spawn zone
 
 .code
-SpawnGhosts PROC USES eax ecx esi
+SpawnGhosts PROC USES eax ecx edx esi
 	mov eax, 0
 	mov ecx, 4
 	mov esi, 0
 
-	Spawn:
-		Call GhostUpdate
-		inc esi
-		loop Spawn
-	
-	mov eax, 14
-	Call SetTextColor		;reset Pac-Man's color
-
-	ret
-SpawnGhosts ENDP
-
-;Uses ESI value to update a ghost
-GhostUpdate PROC
+Spawn:
 	mov al, GhostColors[esi]
 	Call SetTextColor
 	mov dl, GhostXs[esi]
@@ -200,62 +189,11 @@ GhostUpdate PROC
 	Call GotoXY
 	mov al, 'G'
 	Call WriteChar
+	inc esi
+	loop Spawn
 
-ret
-GhostUpdate ENDP
-
-GhostMove PROC USES eax ecx edx esi
-	mov eax, 0
-	mov ecx, 4
-	mov esi, 0
-
-	Move:
-		mov al, GhostSpawn[esi]
-		cmp al, 1
-		je SpawnMove
-		mov eax, 0
-		push esi
-
-		;spawn
-		SpawnMove:
-			cmp esi, 0
-			je RedSpawn
-			cmp esi, 1
-			je BlueSpawn
-			cmp esi, 2
-			je PinkSpawn
-			cmp esi, 3
-			je OrangeSpawn
-			jmp RegularMove
-
-		RedSpawn:
-		inc GhostXs[esi]
-
-		;Call GhostUpdate
-
-		BlueSpawn:
-
-		PinkSpawn:
-		
-		OrangeSpawn:
-
-
-		;directions:
-		;0 = up
-		;1 = down
-		;2 = left
-		;3 = right
-
-		RegularMove:
-
-		loop Move
-
-	Moved:
-	mov eax, 14
-	Call SetTextColor		;reset Pac-Man's color
 	ret
-
-GhostMove ENDP
+SpawnGhosts ENDP
 
 Movements PROC
 	mov eax, 150	;delay in milliseconds, smaller = faster game
@@ -270,7 +208,7 @@ Movements PROC
 
 	Movement:
 	Call PacMove
-	Call GhostMove
+	;Call GhostMove
 
 	ret
 Movements ENDP
@@ -284,6 +222,9 @@ MoveInput PROC
 MoveInput ENDP
 
 PacMove PROC
+	mov eax, 14
+	Call SetTextColor
+
 	mov dl, PacPosX
 	mov dh, PacPosY
 	CALL GoToXY
@@ -1131,39 +1072,36 @@ DoneTime:
 RET
 CheckTime ENDP
 
-BigDotEffect PROC
-	
-	mov esi, OFFSET GhostArray
+BigDotEffect PROC USES esi ecx
+	mov eax, 0
+	mov esi, 0
 	mov ecx, 4
 	CMP EatGhostsFlag, 1
 	je Edible
 	jmp Deadly
 
 	Edible:
-		inc esi
-		mov eax, 9
+		mov al, 9
 		CALL SetTextColor
 		mov al, 'G'
-		mov dl, [esi]
-		inc esi
-		mov dh, [esi]
+		mov dl, GhostXs[esi]
+		mov dh, GhostYs[esi]
 		CALL GoToXY
 		CALL writechar
 		inc esi
 		Loop Edible
-		jmp BigDotDone
+
+	jmp BigDotDone
 		 
 	Deadly:
-		mov eax, [esi]
+		mov al, GhostColors[esi]
 		CALL SetTextColor
-		inc esi
 		mov al, 'G'
-		mov dl, [esi]
-		inc esi
-		mov dh, [esi]
-		inc esi
+		mov dl, GhostXs[esi]
+		mov dh, GhostYs[esi]
 		CALL GoToXY
 		CALL writechar
+		inc esi
 		Loop Deadly
 		
 BigDotDone:
