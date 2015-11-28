@@ -29,7 +29,7 @@ ScoreY db 4
 Score dw 0
 NoMoreFruit dd 0
 FruitTime dd 0
-boardArray  db '############################', 
+boardArray  db '############################', ;28 per row
 			   '#............##............#', 
 			   '#.####.#####.##.#####.####.#', 
 			   '#o####.#####.##.#####.####o#',
@@ -120,6 +120,7 @@ PacmanTitle11 db "#           #       #  #########  #       #  #       #  #     
 
 .code
 main PROC
+	Call Randomize
 	;CALL StartScreen
 	CALL CLRSCR
 	CALL PrintBoard
@@ -171,7 +172,7 @@ PrintBoard ENDP
 GhostColors db 0Ch, 0Bh, 0Dh, 0Eh
 GhostXs db 23, 25, 28, 30
 GhostYs db 14, 14, 14, 14
-GhostCollisions dw 303, 303, 303, 303
+GhostCollisions dd 303, 303, 303, 303
 GhostDirs db 0, 0, 0, 0
 GhostSpawn db 1, 1, 1, 1	;used to check if Ghost is in spawn zone
 
@@ -259,7 +260,22 @@ ToEnd:
 	ret
 CheckGhostSpawnZone ENDP
 
+GhostUpdate PROC USES eax edx
+	mov eax, 0
+	mov edx, 0
+	
+	mov al, GhostColors[esi]
+	Call SetTextColor
+	mov dl, GhostXs[esi]
+	mov dh, GhostYs[esi]
+	Call GotoXY
+	mov al, 'G'
+	Call WriteChar
 
+	ret
+GhostUpdate ENDP
+
+;directions: 0 = up  1 = down  2 = left  3 = right
 GhostMove PROC USES eax ecx edx esi
 	mov eax, 0
 	mov ecx, 4
@@ -267,21 +283,173 @@ GhostMove PROC USES eax ecx edx esi
 	mov esi, 0
 
 	Move:
-		;spawn
-		Call CheckGhostSpawnZone
-		;directions: 0 = up  1 = down  2 = left  3 = right
+		mov al, GhostSpawn[esi]
+		cmp al, 1
+		je SpawnTime
+		jmp RegularMove
 		
+	SpawnTime:
+		Call CheckGhostSpawnZone
+		jmp EndLoop
 
 	RegularMove:
+		;empty old spot
+		mov dl, GhostXs[esi]
+		mov dh, GhostYs[esi]
+		Call GotoXY
+		mov al, ' '
+		Call WriteChar
+
+		;set new spot
+		Call GhostNextMove
+
+		;print in new spot
+		mov dl, GhostXs[esi]
+		mov dh, GhostYs[esi]
+		Call GotoXY
+		mov al, GhostColors[esi]
+		Call SetTextColor
+		mov al, 'G'
+		Call WriteChar
+
+	EndLoop:
 		inc esi
 		loop Move
 
-Moved:
-	;mov eax, 14
-	;Call SetTextColor		;reset Pac-Man's color
+ToEnd:
 	ret
 
 GhostMove ENDP
+
+.data
+DirAvailable db 0,0,0,0
+
+.code
+GhostNextMove PROC USES eax ecx edx
+	Call GhostDirCheck
+	mov al, GhostDirs[esi]
+	cmp al, 0
+	je MoveUp
+	cmp al, 1
+	je MoveDown
+	cmp al, 2
+	je MoveLeft
+	cmp al, 3
+	je MoveRight
+
+MoveUp:
+	sub GhostCollisions[esi], 28
+	sub GhostYs[esi], 1
+	Call GhostUpdate
+	jmp ToEnd
+MoveDown:
+	add GhostCollisions[esi], 28
+	add GhostYs[esi], 1
+	Call GhostUpdate
+	jmp ToEnd
+MoveLeft:
+	sub GhostCollisions[esi], 1
+	sub GhostXs[esi], 1
+	Call GhostUpdate
+	jmp ToEnd
+MoveRight:
+	add GhostCollisions[esi], 1
+	add GhostXs[esi], 1
+	Call GhostUpdate
+
+ToEnd:
+	ret
+GhostNextMove ENDP
+
+GhostDirCheck PROC USES eax ecx edx
+	mov eax, 0
+	mov al, GhostDirs[esi]
+	cmp al, 0
+	je CheckUp
+	cmp al, 1
+	je CheckDown
+	cmp al, 2
+	je CheckLeft
+	cmp al, 3
+	je CheckRight
+
+CheckUp:
+	mov eax, GhostCollisions[esi]
+	sub eax, 28
+	cmp eax, '#'
+	je ChangeDir
+	jmp ToEnd
+CheckDown:
+	mov eax, GhostCollisions[esi]
+	add eax, 28
+	cmp eax, '#'
+	je ChangeDir
+	jmp ToEnd
+CheckLeft:
+	mov eax, GhostCollisions[esi]
+	sub eax, 1
+	cmp eax, '#'
+	je ChangeDir
+	jmp ToEnd
+CheckRight:
+	mov eax, GhostCollisions[esi]
+	add eax, 1
+	cmp eax, '#'
+	je ChangeDir
+	jmp ToEnd
+
+ChangeDir:
+
+CheckAvailable:
+	mov eax, GhostCollisions[esi]
+	push eax
+	sub eax, 28
+	cmp eax, '#'
+	jne DirAvailableUp
+Continue1:
+	pop eax
+	push eax
+	add eax, 28
+	cmp eax, '#'
+	jne DirAvailableDown
+Continue2:
+	pop eax
+	push eax
+	sub eax, 1
+	cmp eax, '#'
+	jne DirAvailableLeft
+Continue3:
+	pop eax
+	push eax
+	add eax, 1
+	cmp eax, '#'
+	jne DirAvailableRight
+
+DirAvailableUp:
+	mov DirAvailable[0], 1
+	jmp Continue1
+DirAvailableDown:
+	mov DirAvailable[1], 1
+	jmp Continue2
+DirAvailableLeft:
+	mov DirAvailable[2], 1
+	jmp Continue3
+DirAvailableRight:
+	mov DirAvailable[3], 1
+	mov eax, 0
+	mov ecx, 4
+
+	DirChoice:
+		mov eax, 4
+		Call RandomRange
+		mov bl, DirAvailable[eax]
+		cmp bl, 1
+		je ToEnd
+		loop DirChoice
+ToEnd:
+	mov GhostDirs[esi], al
+	ret
+GhostDirCheck ENDP
 
 Movements PROC
 	mov eax, 150	;delay in milliseconds, smaller = faster game
