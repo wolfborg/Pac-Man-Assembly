@@ -3,18 +3,21 @@
 INCLUDE Irvine/Irvine32.inc
 
 .data
+DOWNARROW BYTE 50h
+LEFTARROW BYTE 4Bh
+RIGHTARROW BYTE 4Dh
+UPARROW BYTE 48h
+PastScoreX db 65
+PastScoreY db 9
+Levels db 0
+NextLevelFlag db 0
 BigDotTime dd ?
 EatGhostsFlag db 0
 StartTime dd ?
 EndGameFlag db 0
 DotsGoneFlag db 246
 PortalFlag db 0
-MoveTimeStart dd 0
 CollisionFlag db 0
-UPARROW BYTE 48h
-DOWNARROW BYTE 50h
-LEFTARROW BYTE 4Bh
-RIGHTARROW BYTE 4Dh
 PacPosX db 26
 PacPosY db 23
 GhostArray db 0Ch,23,14,0Bh,25,14,0Dh,28,14,0Eh,30,14
@@ -24,12 +27,44 @@ PacSymLast db '<'
 PacCollVal dw 1
 PacCollValLast dw 2
 PacCollPos dw 657
-ScoreX db 63
-ScoreY db 4
-Score dw 0
 NoMoreFruit dd 0
 FruitTime dd 0
+Score dw 0
+PreviousScore dw 0
+ScoreX db 63
+ScoreY db 4
 boardArray  db '############################', 
+			   '#............##............#', 
+			   '#.####.#####.##.#####.####.#', 
+			   '#o####.#####.##.#####.####o#',
+			   '#.####.#####.##.#####.####.#', 
+			   '#..........................#', 
+			   '#.####.##.########.##.####.#', 
+			   '#.####.##.########.##.####.#',	;This is used for collision.
+			   '#......##....##....##......#',
+			   '######.##### ## #####.######', 
+			   '######.##### ## #####.######'
+		    db '######.##          ##.######',
+			   '######.## ######## ##.######', 
+			   '######.## #      # ##.######', 
+			   '      .   #      #   .      ', 
+			   '######.## #      # ##.######',	;It is a little hard to read but its the 
+			   '######.## ######## ##.######', 
+			   '######.##          ##.######', 
+			   '######.## ######## ##.######', 
+			   '######.## ######## ##.######',
+			   '#............##............#' 
+		   db  '#.####.#####.##.#####.####.#', 
+			   '#.####.#####.##.#####.####.#', 
+			   '#o..##.......  .......##..o#',	;same as the map below.
+			   '###.##.##.########.##.##.###', 
+			   '###.##.##.########.##.##.###', 
+			   '#......##..........##......#', 
+			   '#.##########.##.##########.#',
+			   '#.##########.##.##########.#', 
+			   '#..........................#', 
+			   '############################'
+RboardArray  db '############################', 
 			   '#............##............#', 
 			   '#.####.#####.##.#####.####.#', 
 			   '#o####.#####.##.#####.####o#',
@@ -120,24 +155,29 @@ PacmanTitle11 db "#           #       #  #########  #       #  #       #  #     
 
 .code
 main PROC
-	CALL StartScreen
+	
+	;CALL StartScreen
 	CALL CLRSCR
 	CALL PrintBoard
-	CALL SpawnGhosts
-	mov eax, 1000
-	CALL Delay
+	LevelStart:
+		CALL ReDrawBoard
+		mov NextLevelFlag, 0
+		CALL SpawnGhosts
+		mov eax, 1000
+		CALL Delay
+		mov eax, 0
+		CALL GetMSeconds
+		mov StartTime,eax
 
-	mov eax, 0
-	CALL GetMSeconds
-	mov StartTime,eax
-
-	Game:
-		Call Movements
-		CALL CheckFruit
-		CALL CheckEndGame
-		CALL CheckTime
-		CMP EndGameFlag, 1
-		jne Game
+		Game:
+			Call Movements
+			CALL CheckFruit
+			CALL CheckEndGame
+			CALL CheckTime
+			CMP NextLevelFlag, 1
+			je LevelStart
+			CMP EndGameFlag, 1
+			jne Game
 
 exit
 main ENDP
@@ -173,6 +213,7 @@ GhostXs db 23, 25, 28, 30
 GhostYs db 14, 14, 14, 14
 GhostDirs db 0, 0, 0, 0
 GhostSpawn db 1, 1, 1, 1	;used to check if Ghost is in spawn zone
+PastScores dd 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 
 .code
 SpawnGhosts PROC USES eax ecx esi
@@ -1068,12 +1109,19 @@ InputMessage ENDP
 CheckEndGame PROC
 
 	CMP DotsGoneFlag, 0
-	je EndGame
+	je NextLevelCheck
 	jmp ContinueGame
 
-	EndGame:
+	NextLevelCheck:
+		cmp Levels, 15
+		jl ResetGame
 		mov EndGameFlag, 1
+		jmp ContinueGame
 
+	ResetGame:
+		CALL PrintPreviousScore
+		CALL NextLevel
+	
 	ContinueGame:
 
 RET
@@ -1171,4 +1219,460 @@ mov eax, 14
 CALL SetTextColor
 RET
 BigDotEffect ENDP
+
+NextLevel PROC
+
+	mov ecx, 868
+	mov esi, 0
+	ResetBoard:
+		mov al, RboardArray[esi]
+		mov boardArray[esi], al
+		inc esi
+		Loop ResetBoard
+
+	mov DotsGoneFlag, 246
+	mov PacPosX, 26
+	mov PacPosY, 23
+	mov GhostArray[0], 0Ch
+	mov GhostArray[1], 23
+	mov GhostArray[2], 14
+	mov GhostArray[3], 0Bh
+	mov GhostArray[4], 25
+	mov GhostArray[5], 14 
+	mov GhostArray[6], 0Dh
+	mov GhostArray[7], 28
+	mov GhostArray[8], 14
+	mov GhostArray[9], 0Eh
+	mov GhostArray[10], 30
+	mov GhostArray[11], 14
+	mov PacPosLastX, 2
+	mov PacPosLastY, 0
+	mov PacSymLast, '<'
+	mov PacCollVal, 1
+	mov PacCollValLast, 2
+	mov PacCollPos, 657
+	mov NoMoreFruit, 0
+	mov NextLevelFlag, 1
+	mov GhostColors[0], 0Ch
+	mov GhostColors[1], 0Bh
+	mov GhostColors[2], 0Dh
+	mov GhostColors[3], 0Eh
+	mov GhostXs[0], 23
+	mov GhostXs[1], 25
+	mov GhostXs[2], 28
+	mov GhostXs[3], 30
+	mov GhostYs[0], 14
+	mov GhostYs[1], 14
+	mov GhostYs[2], 14
+	mov GhostYs[3], 14
+	mov GhostDirs[0], 0
+	mov GhostDirs[1], 0
+	mov GhostDirs[2], 0
+	mov GhostDirs[3], 0
+	mov GhostSpawn[0], 1
+	mov GhostSpawn[1], 1
+	mov GhostSpawn[2], 1
+	mov GhostSpawn[3], 1
+	mov NextLevelFlag, 1
+	
+	inc Levels
+
+RET
+NextLevel ENDP
+
+ReDrawBoard PROC
+
+	mov dh, 0
+	mov dl, 0
+	CALL GoToXY
+	mov eax, 15
+	CALL SetTextColor
+	
+	mov ecx, 55
+	mov esi, 0
+	
+	ReRow1:
+		mov al, row1[esi]
+		CALL writechar
+		inc esi
+		Loop ReRow1
+	
+	mov dh, 1
+	mov dl, 0
+	CALL GoToXY
+	mov ecx, 55
+	mov esi, 0
+	
+	ReRow2:
+		mov al, row2[esi]
+		CALL writechar
+		inc esi
+		Loop ReRow2
+
+	mov dh, 2
+	mov dl, 0
+	CALL GoToXY
+	mov ecx, 55
+	mov esi, 0
+	
+	ReRow3:
+		mov al, row3[esi]
+		CALL writechar
+		inc esi
+		Loop ReRow3
+
+	mov dh, 3
+	mov dl, 0
+	CALL GoToXY
+	mov ecx, 55
+	mov esi, 0
+	
+	ReRow4:
+		mov al, row4[esi]
+		CALL writechar
+		inc esi
+		Loop ReRow4
+
+	mov dh, 4
+	mov dl, 0
+	CALL GoToXY
+	mov ecx, 55
+	mov esi, 0
+	
+	ReRow5:
+		mov al, row5[esi]
+		CALL writechar
+		inc esi
+		Loop ReRow5
+
+	mov dh, 5
+	mov dl, 0
+	CALL GoToXY
+	mov ecx, 55
+	mov esi, 0
+	
+	ReRow6:
+		mov al, row6[esi]
+		CALL writechar
+		inc esi
+		Loop ReRow6
+
+	mov dh, 6
+	mov dl, 0
+	CALL GoToXY
+	mov ecx, 55
+	mov esi, 0
+	
+	ReRow7:
+		mov al, row7[esi]
+		CALL writechar
+		inc esi
+		Loop ReRow7
+
+	mov dh, 7
+	mov dl, 0
+	CALL GoToXY
+	mov ecx, 55
+	mov esi, 0
+	
+	ReRow8:
+		mov al, row8[esi]
+		CALL writechar
+		inc esi
+		Loop ReRow8
+
+	mov dh, 8
+	mov dl, 0
+	CALL GoToXY
+	mov ecx, 55
+	mov esi, 0
+	
+	ReRow9:
+		mov al, row9[esi]
+		CALL writechar
+		inc esi
+		Loop ReRow9
+
+	mov dh, 9
+	mov dl, 0
+	CALL GoToXY
+	mov ecx, 55
+	mov esi, 0
+	
+	ReRow10:
+		mov al, row10[esi]
+		CALL writechar
+		inc esi
+		Loop ReRow10
+
+	mov dh, 10
+	mov dl, 0
+	CALL GoToXY
+	mov ecx, 55
+	mov esi, 0
+	
+	ReRow11:
+		mov al, row11[esi]
+		CALL writechar
+		inc esi
+		Loop ReRow11
+
+	mov dh, 11
+	mov dl, 0
+	CALL GoToXY
+	mov ecx, 55
+	mov esi, 0
+	
+	ReRow12:
+		mov al, row12[esi]
+		CALL writechar
+		inc esi
+		Loop ReRow12
+
+	mov dh, 12
+	mov dl, 0
+	CALL GoToXY
+	mov ecx, 55
+	mov esi, 0
+	
+	ReRow13:
+		mov al, row13[esi]
+		CALL writechar
+		inc esi
+		Loop ReRow13
+
+	mov dh, 13
+	mov dl, 0
+	CALL GoToXY
+	mov ecx, 55
+	mov esi, 0
+	
+	ReRow14:
+		mov al, row14[esi]
+		CALL writechar
+		inc esi
+		Loop ReRow14
+
+	mov dh, 14
+	mov dl, 0
+	CALL GoToXY
+	mov ecx, 55
+	mov esi, 0
+	
+	ReRow15:
+		mov al, row15[esi]
+		CALL writechar
+		inc esi
+		Loop ReRow15
+
+	mov dh, 15
+	mov dl, 0
+	CALL GoToXY
+	mov ecx, 55
+	mov esi, 0
+	
+	ReRow16:
+		mov al, row16[esi]
+		CALL writechar
+		inc esi
+		Loop ReRow16
+
+	mov dh, 16
+	mov dl, 0
+	CALL GoToXY
+	mov ecx, 55
+	mov esi, 0
+	
+	ReRow17:
+		mov al, row17[esi]
+		CALL writechar
+		inc esi
+		Loop ReRow17
+
+	mov dh, 17
+	mov dl, 0
+	CALL GoToXY
+	mov ecx, 55
+	mov esi, 0
+	
+	ReRow18:
+		mov al, row18[esi]
+		CALL writechar
+		inc esi
+		Loop ReRow18
+
+	mov dh, 18
+	mov dl, 0
+	CALL GoToXY
+	mov ecx, 55
+	mov esi, 0
+	
+	ReRow19:
+		mov al, row19[esi]
+		CALL writechar
+		inc esi
+		Loop ReRow19
+
+	mov dh, 19
+	mov dl, 0
+	CALL GoToXY
+	mov ecx, 55
+	mov esi, 0
+	
+	ReRow20:
+		mov al, row20[esi]
+		CALL writechar
+		inc esi
+		Loop ReRow20
+
+	mov dh, 20
+	mov dl, 0
+	CALL GoToXY
+	mov ecx, 55
+	mov esi, 0
+	
+	ReRow21:
+		mov al, row21[esi]
+		CALL writechar
+		inc esi
+		Loop ReRow21
+
+	mov dh, 21
+	mov dl, 0
+	CALL GoToXY
+	mov ecx, 55
+	mov esi, 0
+	
+	ReRow22:
+		mov al, row22[esi]
+		CALL writechar
+		inc esi
+		Loop ReRow22
+
+	mov dh, 22
+	mov dl, 0
+	CALL GoToXY
+	mov ecx, 55
+	mov esi, 0
+	
+	ReRow23:
+		mov al, row23[esi]
+		CALL writechar
+		inc esi
+		Loop ReRow23
+
+	mov dh, 23
+	mov dl, 0
+	CALL GoToXY
+	mov ecx, 55
+	mov esi, 0
+	
+	ReRow24:
+		mov al, row24[esi]
+		CALL writechar
+		inc esi
+		Loop ReRow24
+
+	mov dh, 24
+	mov dl, 0
+	CALL GoToXY
+	mov ecx, 55
+	mov esi, 0
+	
+	ReRow25:
+		mov al, row25[esi]
+		CALL writechar
+		inc esi
+		Loop ReRow25
+
+	mov dh, 25
+	mov dl, 0
+	CALL GoToXY
+	mov ecx, 55
+	mov esi, 0
+	
+	ReRow26:
+		mov al, row26[esi]
+		CALL writechar
+		inc esi
+		Loop ReRow26
+
+	mov dh, 26
+	mov dl, 0
+	CALL GoToXY
+	mov ecx, 55
+	mov esi, 0
+	
+	ReRow27:
+		mov al, row27[esi]
+		CALL writechar
+		inc esi
+		Loop ReRow27
+
+	mov dh, 27
+	mov dl, 0
+	CALL GoToXY
+	mov ecx, 55
+	mov esi, 0
+	
+	ReRow28:
+		mov al, row28[esi]
+		CALL writechar
+		inc esi
+		Loop ReRow28
+
+	mov dh, 28
+	mov dl, 0
+	CALL GoToXY
+	mov ecx, 55
+	mov esi, 0
+	
+	ReRow29:
+		mov al, row29[esi]
+		CALL writechar
+		inc esi
+		Loop ReRow29
+
+	mov dh, 29
+	mov dl, 0
+	CALL GoToXY
+	mov ecx, 55
+	mov esi, 0
+	
+	ReRow30:
+		mov al, row30[esi]
+		CALL writechar
+		inc esi
+		Loop ReRow30
+
+	mov dh, 30
+	mov dl, 0
+	CALL GoToXY
+	mov ecx, 55
+	mov esi, 0
+	
+	ReRow31:
+		mov al, row31[esi]
+		CALL writechar
+		inc esi
+		Loop ReRow31
+
+RET
+ReDrawBoard ENDP
+
+PrintPreviousScore PROC
+	
+	mov eax, 0
+	mov dh, PastScoreY
+	mov dl, PastScoreX
+	mov ax, Score
+	sub ax, PreviousScore
+	CALL GoToXY
+	CALL writedec
+	mov ax, Score
+	mov PreviousScore, ax
+	inc PastScoreY
+
+RET
+PrintPreviousScore ENDP
 END main
