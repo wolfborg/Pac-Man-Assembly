@@ -181,7 +181,47 @@ SpawnGhosts PROC USES eax ecx edx esi
 	mov ecx, 4
 	mov esi, 0
 
+	Spawn:
+		mov al, GhostColors[esi]
+		Call SetTextColor
+		mov dl, GhostXs[esi]
+		mov dh, GhostYs[esi]
+		Call GotoXY
+		mov al, 'G'
+		Call WriteChar
+		inc esi
+		loop Spawn
+
+	ret
+SpawnGhosts ENDP
+
+CheckGhostSpawnZone PROC USES eax edx
+	mov al, GhostSpawn[esi]
+	cmp eax, 1
+	je Spawn
+	jmp ToEnd
+
 Spawn:
+	cmp esi, 0
+	je RedSpawn
+	cmp esi, 1
+	je BlueSpawn
+	cmp esi, 2
+	je PinkSpawn
+	cmp esi, 3
+	je OrangeSpawn
+
+ToSpawn:
+	mov dl, GhostXs[esi]
+	mov dh, GhostYs[esi]
+	Call GotoXY
+	mov al, ' '
+	Call WriteChar
+
+	mov GhostYs[esi], 11
+	mov GhostXs[esi], 26
+	;Call GhostUpdate
+	
 	mov al, GhostColors[esi]
 	Call SetTextColor
 	mov dl, GhostXs[esi]
@@ -189,11 +229,59 @@ Spawn:
 	Call GotoXY
 	mov al, 'G'
 	Call WriteChar
-	inc esi
-	loop Spawn
+	
 
+	mov GhostSpawn[esi], 0
+	jmp ToEnd
+
+RedSpawn:
+	Call GetMSeconds
+	sub eax, StartTime
+	cmp eax, 10000
+	jge ToSpawn
+BlueSpawn:
+	Call GetMSeconds
+	sub eax, StartTime
+	cmp eax, 15000
+	jge ToSpawn
+PinkSpawn:
+	Call GetMSeconds
+	sub eax, StartTime
+	cmp eax, 20000
+	jge ToSpawn
+OrangeSpawn:
+	Call GetMSeconds
+	sub eax, StartTime
+	cmp eax, 25000
+	jge ToSpawn
+
+ToEnd:
 	ret
-SpawnGhosts ENDP
+CheckGhostSpawnZone ENDP
+
+
+GhostMove PROC USES eax ecx edx esi
+	mov eax, 0
+	mov ecx, 4
+	mov edx, 0
+	mov esi, 0
+
+	Move:
+		;spawn
+		Call CheckGhostSpawnZone
+		;directions: 0 = up  1 = down  2 = left  3 = right
+		
+
+	RegularMove:
+		inc esi
+		loop Move
+
+Moved:
+	;mov eax, 14
+	;Call SetTextColor		;reset Pac-Man's color
+	ret
+
+GhostMove ENDP
 
 Movements PROC
 	mov eax, 150	;delay in milliseconds, smaller = faster game
@@ -202,13 +290,12 @@ Movements PROC
 	Speed:	
 		Call Delay
 		je Movement
-
 		inc ecx
 		loop Speed
 
 	Movement:
 	Call PacMove
-	;Call GhostMove
+	Call GhostMove
 
 	ret
 Movements ENDP
