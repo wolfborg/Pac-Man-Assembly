@@ -196,7 +196,7 @@ SpawnGhosts PROC USES eax ecx edx esi
 	ret
 SpawnGhosts ENDP
 
-CheckGhostSpawnZone PROC USES eax edx
+CheckGhostSpawnZone PROC USES eax ebx edx
 	mov al, GhostSpawn[esi]
 	cmp eax, 1
 	je Spawn
@@ -222,8 +222,14 @@ ToSpawn:
 	mov GhostYs[esi], 11
 	mov GhostXs[esi], 26
 	
+	mov bl, EatGhostsFlag
+	cmp bl, 1
+	je BlueGhost
+
 	mov al, GhostColors[esi]
 	Call SetTextColor
+
+Continue:
 	mov dl, GhostXs[esi]
 	mov dh, GhostYs[esi]
 	Call GotoXY
@@ -254,13 +260,19 @@ OrangeSpawn:
 	sub eax, StartTime
 	cmp eax, 25000
 	jge ToSpawn
+	jmp ToEnd
+
+BlueGhost:
+	mov al, 9
+	Call SetTextColor
+	jmp Continue
 
 ToEnd:
 	ret
 CheckGhostSpawnZone ENDP
 
 ;directions: 0 = up  1 = down  2 = left  3 = right
-GhostMove PROC USES eax ecx edx esi
+GhostMove PROC USES eax ebx ecx edx esi
 	mov eax, 0
 	mov ecx, 4
 	mov edx, 0
@@ -291,14 +303,27 @@ GhostMove PROC USES eax ecx edx esi
 		mov dl, GhostXs[esi]
 		mov dh, GhostYs[esi]
 		Call GotoXY
+
+		mov bl, EatGhostsFlag
+		cmp bl, 1
+		je BlueGhost
+
 		mov al, GhostColors[esi]
 		Call SetTextColor
+
+	Continue:
 		mov al, 'G'
 		Call WriteChar
 
 	EndLoop:
 		inc esi
 		loop Move
+		jmp ToEnd
+
+BlueGhost:
+	mov al, 9
+	Call SetTextColor
+	jmp Continue
 
 ToEnd:
 	Call GhostCollideCheck
