@@ -321,19 +321,19 @@ GhostNextMove PROC USES eax ecx edx
 	je MoveRight
 
 MoveUp:
-	sub GhostCollisions[esi], 28
+	sub GhostCollisions[esi*(type GhostCollisions)], 28
 	sub GhostYs[esi], 1
 	jmp ToEnd
 MoveDown:
-	add GhostCollisions[esi], 28
+	add GhostCollisions[esi*(type GhostCollisions)], 28
 	add GhostYs[esi], 1
 	jmp ToEnd
 MoveLeft:
-	sub GhostCollisions[esi], 1
+	sub GhostCollisions[esi*(type GhostCollisions)], 1
 	sub GhostXs[esi], 2
 	jmp ToEnd
 MoveRight:
-	add GhostCollisions[esi], 1
+	add GhostCollisions[esi*(type GhostCollisions)], 1
 	add GhostXs[esi], 2
 
 ToEnd:
@@ -361,28 +361,28 @@ GhostDirCheck PROC USES eax ebx ecx edx edi
 	je CheckRight
 
 CheckUp:
-	mov edi, GhostCollisions[esi]
+	mov edi, GhostCollisions[esi*(type GhostCollisions)]
 	sub edi, 28
 	mov al, boardArray[edi]
 	cmp al, '#'
 	je ChangeDir
 	jmp ToEnd
 CheckDown:
-	mov edi, GhostCollisions[esi]
+	mov edi, GhostCollisions[esi*(type GhostCollisions)]
 	add edi, 28
 	mov al, boardArray[edi]
 	cmp al, '#'
 	je ChangeDir
 	jmp ToEnd
 CheckLeft:
-	mov edi, GhostCollisions[esi]
+	mov edi, GhostCollisions[esi*(type GhostCollisions)]
 	sub edi, 1
 	mov al, boardArray[edi]
 	cmp al, '#'
 	je ChangeDir
 	jmp ToEnd
 CheckRight:
-	mov edi, GhostCollisions[esi]
+	mov edi, GhostCollisions[esi*(type GhostCollisions)]
 	add edi, 1
 	mov al, boardArray[edi]
 	cmp al, '#'
@@ -391,25 +391,25 @@ CheckRight:
 
 ChangeDir:
 CheckAvailable:
-	mov edi, GhostCollisions[esi]
+	mov edi, GhostCollisions[esi*(type GhostCollisions)]
 	sub edi, 28
 	mov al, boardArray[edi]
 	cmp al, '#'
 	jne DirAvailableUp
 Continue1:
-	mov edi, GhostCollisions[esi]
+	mov edi, GhostCollisions[esi*(type GhostCollisions)]
 	add edi, 28
 	mov al, boardArray[edi]
 	cmp al, '#'
 	jne DirAvailableDown
 Continue2:
-	mov edi, GhostCollisions[esi]
+	mov edi, GhostCollisions[esi*(type GhostCollisions)]
 	sub edi, 1
 	mov al, boardArray[edi]
 	cmp al, '#'
 	jne DirAvailableLeft
 Continue3:
-	mov edi, GhostCollisions[esi]
+	mov edi, GhostCollisions[esi*(type GhostCollisions)]
 	add edi, 1
 	mov al, boardArray[edi]
 	cmp al, '#'
@@ -439,11 +439,13 @@ ToChoice:
 		Call RandomRange
 		mov bl, DirAvailable[eax]
 		cmp bl, 1
-		je ToEnd
+		je ChoiceEnd
 		inc ecx
 		loop DirChoice
-ToEnd:
+
+ChoiceEnd:
 	mov GhostDirs[esi], al
+ToEnd:
 	ret
 GhostDirCheck ENDP
 
