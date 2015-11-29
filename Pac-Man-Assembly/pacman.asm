@@ -833,6 +833,8 @@ EatGhost:
 	mov GhostCollisions[esi*(type GhostCollisions)], 321
 	mov GhostXs[esi], 26
 	mov GhostYs[esi], 11
+	mov dl, GhostXs[esi]
+	mov dh, GhostYs[esi]
 	Call GotoXY
 	mov al, GhostColors[esi]
 	Call SetTextColor
