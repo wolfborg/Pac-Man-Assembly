@@ -289,13 +289,23 @@ GhostMove PROC USES eax ebx ecx edx esi
 		jmp EndLoop
 
 	RegularMove:
+		Call GhostDotIgnore
+
 		;empty old spot
 		mov dl, GhostXs[esi]
 		mov dh, GhostYs[esi]
 		Call GotoXY
+
+		mov bl, GhostIgnoreDotFlag
+		cmp bl, 1
+		je PutDotBack
+		cmp bl, 2
+		je PutBigDotBack
+
 		mov al, ' '
 		Call WriteChar
 
+	Continue1:
 		;set new spot
 		Call GhostNextMove
 
@@ -311,7 +321,7 @@ GhostMove PROC USES eax ebx ecx edx esi
 		mov al, GhostColors[esi]
 		Call SetTextColor
 
-	Continue:
+	Continue2:
 		mov al, 'G'
 		Call WriteChar
 
@@ -320,16 +330,58 @@ GhostMove PROC USES eax ebx ecx edx esi
 		loop Move
 		jmp ToEnd
 
+PutDotBack:
+	mov al, 0Fh
+	Call SetTextColor
+	mov al, '.'
+	Call WriteChar
+	jmp Continue1
+
+PutBigDotBack:
+	mov al, 0Fh
+	Call SetTextColor
+	mov al, 'o'
+	Call WriteChar
+	jmp Continue1
+
 BlueGhost:
 	mov al, 9
 	Call SetTextColor
-	jmp Continue
+	jmp Continue2
 
 ToEnd:
 	Call GhostCollideCheck
 	ret
 
 GhostMove ENDP
+
+.data
+GhostIgnoreDotFlag db 0
+
+.code
+GhostDotIgnore PROC USES eax ebx
+	mov eax, 0
+	mov ebx, 0
+
+	mov eax, GhostCollisions[esi*(type GhostCollisions)]
+	mov bl, boardArray[eax]
+	cmp bl, '.'
+	je SetIgnoreFlag
+	cmp bl, 'o'
+	je SetBigIgnoreFlag
+	mov GhostIgnoreDotFlag, 0
+	jmp ToEnd
+
+SetIgnoreFlag:
+	mov GhostIgnoreDotFlag, 1
+	jmp ToEnd
+
+SetBigIgnoreFlag:
+	mov GhostIgnoreDotFlag, 2
+
+ToEnd:
+	ret
+GhostDotIgnore ENDP
 
 .data
 DirAvailable db 0,0,0,0
