@@ -752,24 +752,53 @@ ExitProcWall:
 RET
 PacmanCollision ENDP
 
+.data
+GhostEatPoints dd 200
+
+.code
 GhostCollideCheck PROC USES eax ebx ecx edx esi
 	mov eax, 0
 	mov ebx, 0
 	mov ecx, 4
+	mov edx, 0
 	mov esi, 0
 
 	CollideCheck:
 		mov eax, GhostCollisions[esi*(type GhostCollisions)]
 		mov bx, PacCollPos
 		cmp eax, ebx
-		je KillPacMan
+		je EffectCheck
+		
+	Continue:
 		inc esi
 		loop CollideCheck
 	jmp ToEnd
 
+EffectCheck:
+	mov cl, EatGhostsFlag
+	cmp cl, 0
+	je KillPacMan
+	cmp cl, 1
+	je EatGhost
+	jmp Continue
+
 KillPacman:
 	;Call CLRSCR
 	exit
+
+EatGhost:
+	mov eax, GhostEatPoints
+	add Score, ax
+	add GhostEatPoints, 200
+	mov GhostCollisions[esi*(type GhostCollisions)], 321
+	mov GhostXs[esi], 26
+	mov GhostYs[esi], 11
+	Call GotoXY
+	mov al, GhostColors[esi]
+	Call SetTextColor
+	mov al, 'G'
+	Call WriteChar
+	jmp Continue
 
 ToEnd:
 	ret
@@ -1375,7 +1404,6 @@ RET
 CheckEndGame ENDP
 
 CheckFruit PROC
-	
 	CMP FruitTime, 1
 	je YesFruit
 	CMP DotsGoneFlag, 123
@@ -1420,6 +1448,7 @@ CheckTime PROC
 
 	GhostRevert:
 		mov EatGhostsFlag,0
+		mov GhostEatPoints, 200
 		CALL BigDotEffect
 
 DoneTime:
