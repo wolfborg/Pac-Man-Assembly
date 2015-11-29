@@ -855,6 +855,11 @@ EatGhost:
 ResetPac:
 	Call GetMSeconds
 	mov eax, starttime
+	mov dh, PacPosY
+	mov dl, PacPosX
+	CALL GoToXY
+	mov al, ' '
+	CALL writechar
 
 	mov PacPosX, 26
 	mov PacPosY, 23
@@ -888,6 +893,16 @@ ResetPac:
 	mov GhostSpawn[1], 1
 	mov GhostSpawn[2], 1
 	mov GhostSpawn[3], 1
+
+	mov eax, 14
+	CALL SetTextColor	
+	mov al, '<'
+	mov dh, PacPosY
+	mov dl, PacPosX
+	CALL GoToXY
+	CALL writechar
+	mov eax, 500
+	CALL Delay
 
 ToEnd:
 	ret
