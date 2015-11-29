@@ -3,10 +3,12 @@
 INCLUDE Irvine/Irvine32.inc
 
 .data
+
 DOWNARROW BYTE 50h
 LEFTARROW BYTE 4Bh
 RIGHTARROW BYTE 4Dh
 UPARROW BYTE 48h
+PacmanLives db 3
 PastScoreX db 65
 PastScoreY db 9
 Levels db 0
@@ -179,6 +181,8 @@ main PROC
 			CMP EndGameFlag, 1
 			jne Game
 
+			;CALL EndGame
+			;CMP 
 exit
 main ENDP
 
@@ -823,8 +827,14 @@ EffectCheck:
 	jmp Continue
 
 KillPacman:
-	;Call CLRSCR
-	exit
+	dec PacmanLives
+	cmp PacmanLives, 0
+	je EndGame
+	jmp ResetPac
+
+	EndGame:
+		mov EndGameFlag, 1
+		jmp ToEnd
 
 EatGhost:
 	mov eax, GhostEatPoints
@@ -841,6 +851,9 @@ EatGhost:
 	mov al, 'G'
 	Call WriteChar
 	jmp Continue
+
+ResetPac:
+	
 
 ToEnd:
 	ret
