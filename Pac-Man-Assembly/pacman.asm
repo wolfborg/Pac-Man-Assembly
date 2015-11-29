@@ -172,7 +172,7 @@ PrintBoard ENDP
 GhostColors db 0Ch, 0Bh, 0Dh, 0Eh
 GhostXs db 23, 25, 28, 30
 GhostYs db 14, 14, 14, 14
-GhostCollisions dd 321, 321, 321, 321
+GhostCollisions dd 349, 349, 349, 349
 GhostDirs db 0, 0, 0, 0
 GhostSpawn db 1, 1, 1, 1	;used to check if Ghost is in spawn zone
 
@@ -231,6 +231,7 @@ ToSpawn:
 	Call WriteChar
 	
 	mov GhostSpawn[esi], 0
+	mov GhostCollisions[esi*(type GhostCollisions)], 321
 	jmp ToEnd
 
 RedSpawn:
@@ -300,6 +301,7 @@ GhostMove PROC USES eax ecx edx esi
 		loop Move
 
 ToEnd:
+	Call GhostCollideCheck
 	ret
 
 GhostMove ENDP
@@ -601,6 +603,7 @@ PacMove PROC
 Moved:
 mov PortalFlag, 0
 
+Call GhostCollideCheck
 RET
 PacMove ENDP
 
@@ -671,6 +674,29 @@ mov boardArray[bx],0
 ExitProcWall:
 RET
 PacmanCollision ENDP
+
+GhostCollideCheck PROC USES eax ebx ecx edx esi
+	mov eax, 0
+	mov ebx, 0
+	mov ecx, 4
+	mov esi, 0
+
+	CollideCheck:
+		mov eax, GhostCollisions[esi*(type GhostCollisions)]
+		mov bx, PacCollPos
+		cmp eax, ebx
+		je KillPacMan
+		inc esi
+		loop CollideCheck
+	jmp ToEnd
+
+KillPacman:
+	;Call CLRSCR
+	exit
+
+ToEnd:
+	ret
+GhostCollideCheck ENDP
 
 PortalCheck PROC
 	
