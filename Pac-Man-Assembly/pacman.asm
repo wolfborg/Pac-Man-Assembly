@@ -853,7 +853,41 @@ EatGhost:
 	jmp Continue
 
 ResetPac:
-	
+	Call GetMSeconds
+	mov eax, starttime
+
+	mov PacPosX, 26
+	mov PacPosY, 23
+	mov PacPosLastX, 2
+	mov PacPosLastY, 0
+	mov PacSymLast, '<'
+	mov PacCollVal, 1
+	mov PacCollValLast, 2
+	mov PacCollPos, 657
+	mov GhostColors[0], 0Ch
+	mov GhostColors[1], 0Bh
+	mov GhostColors[2], 0Dh
+	mov GhostColors[3], 0Eh
+	mov GhostXs[0], 23
+	mov GhostXs[1], 25
+	mov GhostXs[2], 28
+	mov GhostXs[3], 30
+	mov GhostYs[0], 14
+	mov GhostYs[1], 14
+	mov GhostYs[2], 14
+	mov GhostYs[3], 14
+	mov GhostCollisions[0], 349
+	mov GhostCollisions[1], 349
+	mov GhostCollisions[2], 349
+	mov GhostCollisions[3], 349
+	mov GhostDirs[0], 0
+	mov GhostDirs[1], 0
+	mov GhostDirs[2], 0
+	mov GhostDirs[3], 0
+	mov GhostSpawn[0], 1
+	mov GhostSpawn[1], 1
+	mov GhostSpawn[2], 1
+	mov GhostSpawn[3], 1
 
 ToEnd:
 	ret
