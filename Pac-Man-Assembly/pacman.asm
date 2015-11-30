@@ -122,11 +122,11 @@ row22 db "# . # # # # . # # # # # . # # . # # # # # . # # # # . #   |  13:      
 row23 db "# . # # # # . # # # # # . # # . # # # # # . # # # # . #   |  14:              |",0  
 row24 db "# o . . # # . . . . . . .     . . . . . . . # # . . o #   |  15:              |",0  
 row25 db "# # # . # # . # # . # # # # # # # # . # # . # # . # # #   |___________________|",0  
-row26 db "# # # . # # . # # . # # # # # # # # . # # . # # . # # #   |                   |",0  
-row27 db "# . . . . . . # # . . . . . . . . . . # # . . . . . . #   |   <High Score>    |",0 
-row28 db "# . # # # # # # # # # # . # # . # # # # # # # # # # . #   |                   |",0 
-row29 db "# . # # # # # # # # # # . # # . # # # # # # # # # # . #   |    -              |",0  ;64 for High score
-row30 db "# . . . . . . . . . . . . . . . . . . . . . . . . . . #   |                   |",0 
+row26 db "# # # . # # . # # . # # # # # # # # . # # . # # . # # #   |      <Lives>      |",0  
+row27 db "# . . . . . . # # . . . . . . . . . . # # . . . . . . #   |       < < <       |",0 
+row28 db "# . # # # # # # # # # # . # # . # # # # # # # # # # . #   |___________________|",0 
+row29 db "# . # # # # # # # # # # . # # . # # # # # # # # # # . #   |   <High Score>    |",0  ;64 for High score
+row30 db "# . . . . . . . . . . . . . . . . . . . . . . . . . . #   |    -              |",0 
 row31 db "# # # # # # # # # # # # # # # # # # # # # # # # # # # #   |___________________|",0 
 LinePos dd 0
 PrintX db 0
@@ -154,6 +154,9 @@ PacmanTitle8  db "#           #       #  #          #       #  #       #  #     
 PacmanTitle9  db "#           #       #  #          #       #  #       #  #       # #",0
 PacmanTitle10 db "#           #       #  #          #       #  #       #  #        ##",0
 PacmanTitle11 db "#           #       #  #########  #       #  #       #  #         #",0
+LivesString BYTE "< < <",0
+LivesPosY db 26
+LivesPosX db 70
 
 .code
 main PROC
@@ -161,6 +164,13 @@ main PROC
 	;CALL StartScreen
 	CALL CLRSCR
 	CALL PrintBoard
+	mov dh, 26
+	mov dl, 66
+	CALL GoToXY
+	mov eax, 14
+	CALL SetTextColor
+	mov edx, OFFSET LivesString
+ 	CALL writestring
 	LevelStart:
 		CALL ReDrawBoard
 		mov NextLevelFlag, 0
@@ -181,8 +191,7 @@ main PROC
 			CMP EndGameFlag, 1
 			jne Game
 
-			;CALL EndGame
-			;CMP 
+			
 exit
 main ENDP
 
@@ -287,22 +296,22 @@ Continue:
 RedSpawn:
 	Call GetMSeconds
 	sub eax, StartTime
-	cmp eax, 10000
+	cmp eax, 5000
 	jge ToSpawn
 BlueSpawn:
 	Call GetMSeconds
 	sub eax, StartTime
-	cmp eax, 15000
+	cmp eax, 7500
 	jge ToSpawn
 PinkSpawn:
 	Call GetMSeconds
 	sub eax, StartTime
-	cmp eax, 20000
+	cmp eax, 10000
 	jge ToSpawn
 OrangeSpawn:
 	Call GetMSeconds
 	sub eax, StartTime
-	cmp eax, 25000
+	cmp eax, 12500
 	jge ToSpawn
 	jmp ToEnd
 
@@ -828,6 +837,12 @@ EffectCheck:
 
 KillPacman:
 	dec PacmanLives
+	mov dh, LivesPosY
+	mov dl, LivesPosX
+	mov al, ' '
+	CALL GoToXY
+	CALL writechar
+	sub LivesPosX, 2
 	cmp PacmanLives, 0
 	je EndGame
 	jmp ResetPac
@@ -1565,7 +1580,7 @@ CheckTime PROC
 
 	CMP eax, 60000
 	jge FruitFlag
-	CMP ebx, 10000
+	CMP ebx, 5000
 	jge GhostRevert
 	jmp DoneTime
 	
