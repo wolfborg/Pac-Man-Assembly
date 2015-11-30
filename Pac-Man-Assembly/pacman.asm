@@ -207,11 +207,20 @@ main PROC
 				jne Game
 
 			CALL EndGameAnimation
+		AgainCheck:
 			CMP AgainFlag, 'y'
 			je MainGame
 			CMP AgainFlag, 'Y'
 			je MainGame
+			CMP AgainFlag, 'n'
+			je ToEnd
+			CMP AgainFlag, 'N'
+			je ToEnd
+			mov eax, 0
+			Call readchar
+			mov AgainFlag, al
 
+ToEnd:
 exit
 main ENDP
 
