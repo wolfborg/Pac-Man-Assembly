@@ -2053,6 +2053,8 @@ ReDrawBoard ENDP
 
 PrintPreviousScore PROC
 	
+	mov eax, 15
+	CALL SetTextColor
 	mov eax, 0
 	mov dh, PastScoreY
 	mov dl, PastScoreX
