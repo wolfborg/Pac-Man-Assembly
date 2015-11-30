@@ -850,6 +850,13 @@ EatGhost:
 	Call SetTextColor
 	mov al, 'G'
 	Call WriteChar
+	mov eax, 14
+	CALL SetTextColor
+	mov dh, PacPosY
+	mov dl, PacPosX
+	CALL GoToXY
+	mov al, PacSymLast
+	CALL writechar
 	jmp Continue
 
 ResetPac:
