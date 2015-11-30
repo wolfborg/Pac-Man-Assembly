@@ -398,6 +398,8 @@ GhostMove PROC USES eax ebx ecx edx esi
 		je PutDotBack
 		cmp bl, 2
 		je PutBigDotBack
+		cmp bl, 3
+		je PutFruitBack
 
 		mov al, ' '
 		Call WriteChar
@@ -438,6 +440,13 @@ PutBigDotBack:
 	mov al, 0Fh
 	Call SetTextColor
 	mov al, 'o'
+	Call WriteChar
+	jmp Continue1
+
+PutFruitBack:
+	mov al, 10
+	Call SetTextColor
+	mov al, 235
 	Call WriteChar
 	jmp Continue1
 
