@@ -854,12 +854,23 @@ EatGhost:
 
 ResetPac:
 	Call GetMSeconds
-	mov eax, starttime
+	mov StartTime, eax
 	mov dh, PacPosY
 	mov dl, PacPosX
 	CALL GoToXY
 	mov al, ' '
 	CALL writechar
+
+	mov edi, 0
+	mov ecx, 4
+	GhostReset:
+		mov dl, GhostXs[edi]
+		mov dh, GhostYs[edi]
+		Call GotoXY
+		mov al, ' '
+		Call WriteChar
+		inc edi
+		loop GhostReset
 	
 	mov PacPosX, 26
 	mov PacPosY, 23
