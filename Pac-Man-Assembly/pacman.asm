@@ -164,7 +164,7 @@ PlayAgain BYTE "Play Again(Y/N)?: ",0
 main PROC
 	
 	CALL Randomize
-	;CALL StartScreen
+	CALL StartScreen
 	
 	MainGame:
 		
