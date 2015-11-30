@@ -164,7 +164,7 @@ PlayAgain BYTE "Play Again(Y/N)?: ",0
 main PROC
 	
 	CALL Randomize
-	CALL StartScreen
+	;CALL StartScreen
 	
 	MainGame:
 		
@@ -207,6 +207,7 @@ main PROC
 				jne Game
 
 			CALL EndGameAnimation
+		
 		AgainCheck:
 			CMP AgainFlag, 'y'
 			je MainGame
@@ -219,7 +220,7 @@ main PROC
 			mov eax, 0
 			Call readchar
 			mov AgainFlag, al
-
+			jmp AgainCheck
 ToEnd:
 exit
 main ENDP
@@ -2147,6 +2148,9 @@ EndGameAnimation PROC
 	mov eax, 14
 	CALL SetTextColor
 	
+	CMP PacmanLives, 0
+	jne GameWon
+
 	mov ecx, 6
 	FirstEndLoop:
 		mov dh, PacPosY
@@ -2272,9 +2276,61 @@ EndGameAnimation PROC
 			inc esi
 			Loop PrintGameOver
 
-		mov eax, 3000
+		mov eax, 1000
 		CALL Delay
+		Jmp ResetVar
 
+		GameWon:
+		
+		mov ecx, 6
+		FirstWonLoop:
+			mov dh, PacPosY
+			mov dl, PacPosX
+			CALL GoToXY
+			mov al, '^'
+			CALL writechar
+			mov eax, 50
+			CALL Delay
+			mov dh, PacPosY
+			mov dl, PacPosX
+			CALL GoToXY
+			mov al, '>'
+			CALL writechar
+			mov eax, 50
+			CALL Delay
+			mov dh, PacPosY
+			mov dl, PacPosX
+			CALL GoToXY
+			mov al, 'v'
+			CALL writechar
+			mov eax, 50
+			CALL Delay
+			mov dh, PacPosY
+			mov dl, PacPosX
+			CALL GoToXY
+			mov al, '<'
+			CALL writechar
+			Loop FirstWonLoop
+
+		mov ecx, 6
+		SecondWonLoop:
+			mov dh, PacPosY
+			mov dl, PacPosX
+			CALL GoToXY
+			mov al, '>'
+			CALL writechar
+			mov eax, 200
+			CALL Delay
+			mov dh, PacPosY
+			mov dl, PacPosX
+			CALL GoToXY
+			mov al, '<'
+			CALL writechar
+			mov eax, 200
+			CALL Delay
+			Loop SecondWonLoop
+
+		ResetVar:
 		mov LivesPosY, 26
 		mov LivesPosX, 70
 		mov PacmanLives, 3
