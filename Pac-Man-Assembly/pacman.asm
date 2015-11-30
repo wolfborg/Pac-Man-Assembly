@@ -164,7 +164,7 @@ PlayAgain BYTE "Play Again(Y/N)?: ",0
 main PROC
 	
 	CALL Randomize
-	CALL StartScreen
+	;CALL StartScreen
 	
 	MainGame:
 		
@@ -1640,18 +1640,10 @@ CheckTime PROC
 	sub eax, StartTime
 	sub ebx, BigDotTime
 
-	CMP eax, 60000
-	jge FruitFlag
-Continue:
 	CMP ebx, 5000
 	jge GhostRevert
 	jmp DoneTime
 	
-	FruitFlag:
-		CMP FruitTime, 2
-		je Continue
-		mov FruitTime, 1
-		jmp Continue
 
 	GhostRevert:
 		mov EatGhostsFlag,0
