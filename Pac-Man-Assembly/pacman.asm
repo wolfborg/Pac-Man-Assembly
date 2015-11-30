@@ -899,10 +899,10 @@ ResetPac:
 	mov GhostYs[1], 14
 	mov GhostYs[2], 14
 	mov GhostYs[3], 14
-	mov GhostCollisions[0], 349
-	mov GhostCollisions[1], 349
-	mov GhostCollisions[2], 349
-	mov GhostCollisions[3], 349
+	mov GhostCollisions[0*(type GhostCollisions)], 349
+	mov GhostCollisions[1*(type GhostCollisions)], 349
+	mov GhostCollisions[2*(type GhostCollisions)], 349
+	mov GhostCollisions[3*(type GhostCollisions)], 349
 	mov GhostDirs[0], 0
 	mov GhostDirs[1], 0
 	mov GhostDirs[2], 0
@@ -1656,10 +1656,10 @@ NextLevel PROC
 	mov GhostYs[1], 14
 	mov GhostYs[2], 14
 	mov GhostYs[3], 14
-	mov GhostCollisions[0], 349
-	mov GhostCollisions[1], 349
-	mov GhostCollisions[2], 349
-	mov GhostCollisions[3], 349
+	mov GhostCollisions[0*(type GhostCollisions)], 349
+	mov GhostCollisions[1*(type GhostCollisions)], 349
+	mov GhostCollisions[2*(type GhostCollisions)], 349
+	mov GhostCollisions[3*(type GhostCollisions)], 349
 	mov GhostDirs[0], 0
 	mov GhostDirs[1], 0
 	mov GhostDirs[2], 0
