@@ -175,6 +175,15 @@ main PROC
 		CALL ReDrawBoard
 		mov NextLevelFlag, 0
 		CALL SpawnGhosts
+
+		mov eax, 14
+		CALL SetTextColor
+		mov dh, PacPosY
+		mov dl, PacPosX
+		CALL GoToXY
+		mov al, '<'
+		CALL writechar
+
 		mov eax, 1000
 		CALL Delay
 		mov eax, 0
@@ -1684,6 +1693,16 @@ NextLevel PROC
 	mov GhostSpawn[2], 1
 	mov GhostSpawn[3], 1
 	mov NextLevelFlag, 1
+
+	mov eax, 14
+	CALL SetTextColor
+	mov dh, PacPosY
+	mov dl, PacPosX
+	CALL GoToXY
+	mov al, '<'
+	CALL writechar
+	mov eax, 600
+	CALL Delay
 	
 	inc Levels
 
