@@ -252,11 +252,14 @@ PrintBoard ENDP
 
 .data
 GhostColors db 0Ch, 0Bh, 0Dh, 0Eh
+GhostOriginalXs db 23, 25, 28, 30
+GhostWait db 0, 0, 0, 0
 GhostXs db 23, 25, 28, 30
 GhostYs db 14, 14, 14, 14
 GhostCollisions dd 349, 349, 349, 349
 GhostDirs db 0, 0, 0, 0
 GhostSpawn db 1, 1, 1, 1	;used to check if Ghost is in spawn zone
+TempTime dd 0
 
 .code
 SpawnGhosts PROC USES eax ecx edx esi
@@ -285,6 +288,10 @@ CheckGhostSpawnZone PROC USES eax ebx edx
 	jmp ToEnd
 
 Spawn:
+	mov al, GhostWait[esi]
+	cmp eax, 0
+	jg Respawn
+
 	cmp esi, 0
 	je RedSpawn
 	cmp esi, 1
@@ -295,6 +302,7 @@ Spawn:
 	je OrangeSpawn
 
 ToSpawn:
+	mov GhostWait[esi], 0
 	mov dl, GhostXs[esi]
 	mov dh, GhostYs[esi]
 	Call GotoXY
@@ -341,6 +349,13 @@ OrangeSpawn:
 	Call GetMSeconds
 	sub eax, StartTime
 	cmp eax, 12500
+	jge ToSpawn
+	jmp ToEnd
+
+Respawn:
+	Call GetMSeconds
+	sub eax, TempTime
+	cmp eax, 3000
 	jge ToSpawn
 	jmp ToEnd
 
@@ -884,9 +899,18 @@ EatGhost:
 	mov eax, GhostEatPoints
 	add Score, ax
 	add GhostEatPoints, 200
+
+	;reset Ghost to spawn
+	Call GetMSeconds
+	mov TempTime, eax
+	mov eax, 0
 	mov GhostCollisions[esi*(type GhostCollisions)], 321
-	mov GhostXs[esi], 26
-	mov GhostYs[esi], 11
+	mov al, GhostOriginalXs[esi]
+	mov GhostWait[esi], 1
+	mov GhostSpawn[esi], 1
+	mov GhostXs[esi], al
+	mov GhostYs[esi], 14
+	
 	mov dl, GhostXs[esi]
 	mov dh, GhostYs[esi]
 	Call GotoXY
