@@ -219,6 +219,7 @@ main PROC
 			mov eax, 0
 			Call readchar
 			mov AgainFlag, al
+			jmp AgainCheck
 
 ToEnd:
 exit
@@ -1608,15 +1609,16 @@ CheckTime PROC
 
 	CMP eax, 60000
 	jge FruitFlag
+Continue:
 	CMP ebx, 5000
 	jge GhostRevert
 	jmp DoneTime
 	
 	FruitFlag:
 		CMP FruitTime, 2
-		je DoneTime
+		je Continue
 		mov FruitTime, 1
-		jmp DoneTime
+		jmp Continue
 
 	GhostRevert:
 		mov EatGhostsFlag,0
@@ -2127,7 +2129,7 @@ RET
 PrintPreviousScore ENDP
 
 EndGameAnimation PROC
-	
+
 	mov PacPosX, 26
 	mov PacPosY, 23
 	mov ecx, 29
