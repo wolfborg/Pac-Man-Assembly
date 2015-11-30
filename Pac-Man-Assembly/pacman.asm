@@ -31,10 +31,10 @@ PacCollPos dw 657
 ScoreX db 63
 ScoreY db 4
 Score dw 0
+AgainFlag db ?
 NoMoreFruit dd 0
 FruitTime dd 0
 PreviousScore dw 0
-
 boardArray  db '############################', ;28 in each row
 			   '#............##............#', 
 			   '#.####.#####.##.#####.####.#', 
@@ -97,6 +97,7 @@ RboardArray  db '############################',
 			   '#.##########.##.##########.#', 
 			   '#..........................#', 
 			   '############################'
+ClearRow BYTE "                                                     ",0
 row1  db "# # # # # # # # # # # # # # # # # # # # # # # # # # # #    ___________________ ",0
 row2  db "# . . . . . . . . . . . . # # . . . . . . . . . . . . #   |                   |",0  
 row3  db "# . # # # # . # # # # # . # # . # # # # # . # # # # . #   |  <Current Score>  |",0  
@@ -157,24 +158,29 @@ PacmanTitle11 db "#           #       #  #########  #       #  #       #  #     
 LivesString BYTE "< < <",0
 LivesPosY db 26
 LivesPosX db 70
-
+GameOverMess BYTE "GAME OVER",0
+PlayAgain BYTE "Play Again(Y/N)?: ",0
 .code
 main PROC
-	Call Randomize
-	;CALL StartScreen
-	CALL CLRSCR
-	CALL PrintBoard
-	mov dh, 26
-	mov dl, 66
-	CALL GoToXY
-	mov eax, 14
-	CALL SetTextColor
-	mov edx, OFFSET LivesString
- 	CALL writestring
-	LevelStart:
-		CALL ReDrawBoard
-		mov NextLevelFlag, 0
-		CALL SpawnGhosts
+	
+	CALL Randomize
+	CALL StartScreen
+	
+	MainGame:
+		
+		CALL CLRSCR
+		CALL PrintBoard
+		mov dh, 26
+		mov dl, 66
+		CALL GoToXY
+		mov eax, 14
+		CALL SetTextColor
+		mov edx, OFFSET LivesString
+ 		CALL writestring
+		LevelStart:
+			CALL ReDrawBoard
+			mov NextLevelFlag, 0
+			CALL SpawnGhosts
 
 		mov eax, 14
 		CALL SetTextColor
@@ -184,23 +190,28 @@ main PROC
 		mov al, '<'
 		CALL writechar
 
-		mov eax, 1000
-		CALL Delay
-		mov eax, 0
-		CALL GetMSeconds
-		mov StartTime,eax
+			mov eax, 1000
+			CALL Delay
+			mov eax, 0
+			CALL GetMSeconds
+			mov StartTime,eax
 
-		Game:
-			Call Movements
-			CALL CheckFruit
-			CALL CheckEndGame
-			CALL CheckTime
-			CMP NextLevelFlag, 1
-			je LevelStart
-			CMP EndGameFlag, 1
-			jne Game
+			Game:
+ 				Call Movements
+				CALL CheckFruit
+				CALL CheckEndGame
+				CALL CheckTime
+				CMP NextLevelFlag, 1
+				je LevelStart
+				CMP EndGameFlag, 1
+				jne Game
 
-			
+			CALL EndGameAnimation
+			CMP AgainFlag, 'y'
+			je MainGame
+			CMP AgainFlag, 'Y'
+			je MainGame
+
 exit
 main ENDP
 
@@ -236,7 +247,6 @@ GhostYs db 14, 14, 14, 14
 GhostCollisions dd 349, 349, 349, 349
 GhostDirs db 0, 0, 0, 0
 GhostSpawn db 1, 1, 1, 1	;used to check if Ghost is in spawn zone
-PastScores dd 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 
 .code
 SpawnGhosts PROC USES eax ecx edx esi
@@ -2106,4 +2116,228 @@ PrintPreviousScore PROC
 
 RET
 PrintPreviousScore ENDP
+
+EndGameAnimation PROC
+	
+	mov PacPosX, 26
+	mov PacPosY, 23
+	mov ecx, 29
+	mov dh, 1
+	mov dl, 1
+	CALL GoToXY
+
+	ClearLoop:
+		push edx
+		mov edx, OFFSET ClearRow
+		CALL writestring
+		pop edx
+		inc dh
+		CALL GoToXY
+		Loop ClearLoop
+	
+	mov eax, 14
+	CALL SetTextColor
+	
+	mov ecx, 6
+	FirstEndLoop:
+		mov dh, PacPosY
+		mov dl, PacPosX
+		CALL GoToXY
+		mov al, '^'
+		CALL writechar
+		mov eax, 50
+		CALL Delay
+		mov dh, PacPosY
+		mov dl, PacPosX
+		CALL GoToXY
+		mov al, '>'
+		CALL writechar
+		mov eax, 50
+		CALL Delay
+		mov dh, PacPosY
+		mov dl, PacPosX
+		CALL GoToXY
+		mov al, 'v'
+		CALL writechar
+		mov eax, 50
+		CALL Delay
+		mov dh, PacPosY
+		mov dl, PacPosX
+		CALL GoToXY
+		mov al, '<'
+		CALL writechar
+		Loop FirstEndLoop
+
+	mov ecx, 3
+	SecondEndLoop:
+		mov dh, PacPosY
+		mov dl, PacPosX
+		CALL GoToXY
+		mov al, '^'
+		CALL writechar
+		mov eax, 150
+		CALL Delay
+		mov dh, PacPosY
+		mov dl, PacPosX
+		CALL GoToXY
+		mov al, '>'
+		CALL writechar
+		mov eax, 150
+		CALL Delay
+		mov dh, PacPosY
+		mov dl, PacPosX
+		CALL GoToXY
+		mov al, 'v'
+		CALL writechar
+		mov eax, 150
+		CALL Delay
+		mov dh, PacPosY
+		mov dl, PacPosX
+		CALL GoToXY
+		mov al, '<'
+		CALL writechar
+		Loop SecondEndLoop
+	
+	
+		mov dh, PacPosY
+		mov dl, PacPosX
+		CALL GoToXY
+		mov al, '^'
+		CALL writechar
+		mov eax, 300
+		CALL Delay
+		mov dh, PacPosY
+		mov dl, PacPosX
+		CALL GoToXY
+		mov al, '>'
+		CALL writechar
+		mov eax, 300
+		CALL Delay
+		mov dh, PacPosY
+		mov dl, PacPosX
+		CALL GoToXY
+		mov al, 'v'
+		CALL writechar
+		mov eax, 300
+		CALL Delay
+		mov dh, PacPosY
+		mov dl, PacPosX
+		CALL GoToXY
+		mov al, '<'
+		CALL writechar
+	
+		mov dh, PacPosY
+		mov dl, PacPosX
+		CALL GoToXY
+		mov al, '^'
+		CALL writechar
+		mov eax, 750
+		CALL Delay
+		mov dh, PacPosY
+		mov dl, PacPosX
+		CALL GoToXY
+		mov al, '>'
+		CALL writechar
+		mov eax, 750
+		CALL Delay
+		mov dh, PacPosY
+		mov dl, PacPosX
+		CALL GoToXY
+		mov al, 'v'
+		CALL writechar
+		mov eax, 750
+		CALL Delay
+		
+		mov dh, 14
+		mov dl, 22
+		CALL GoToXY
+		mov eax, 4
+		CALL SetTextColor
+		mov ecx, 9
+		mov esi, 0
+		PrintGameOver:
+			mov al, GameOverMess[esi]
+			CALL writechar
+			mov eax, 400
+			CALL Delay
+			inc esi
+			Loop PrintGameOver
+
+		mov eax, 3000
+		CALL Delay
+
+		mov LivesPosY, 26
+		mov LivesPosX, 70
+		mov PacmanLives, 3
+		mov PastScoreX, 65
+		mov PastScoreY, 9
+		mov Levels, 0
+		mov NextLevelFlag, 0
+		mov EatGhostsFlag, 0
+		mov EndGameFlag, 0
+		mov DotsGoneFlag, 246
+		mov PortalFlag, 0
+		mov CollisionFlag, 0
+		mov PacPosX, 26
+		mov PacPosY, 23
+		mov PacPosLastX, 2
+		mov PacPosLastY, 0
+		mov PacSymLast, '<'
+		mov PacCollVal, 1
+		mov PacCollValLast, 2
+		mov PacCollPos, 657
+		mov Score, 0
+		mov NoMoreFruit, 0
+		mov FruitTime, 0
+		mov PreviousScore, 0
+		mov GhostColors[0], 0Ch
+		mov GhostColors[1], 0Bh
+		mov GhostColors[2], 0Dh
+		mov GhostColors[3], 0Eh
+		mov GhostXs[0], 23
+		mov GhostXs[1], 25
+		mov GhostXs[2], 28
+		mov GhostXs[3], 30
+		mov GhostYs[0], 14
+		mov GhostYs[1], 14
+		mov GhostYs[2], 14
+		mov GhostYs[3], 14
+		mov GhostCollisions[0*(type GhostCollisions)], 349
+		mov GhostCollisions[1*(type GhostCollisions)], 349
+		mov GhostCollisions[2*(type GhostCollisions)], 349
+		mov GhostCollisions[3*(type GhostCollisions)], 349
+		mov GhostDirs[0], 0
+		mov GhostDirs[1], 0
+		mov GhostDirs[2], 0
+		mov GhostDirs[3], 0
+		mov GhostSpawn[0], 1
+		mov GhostSpawn[1], 1
+		mov GhostSpawn[2], 1
+		mov GhostSpawn[3], 1
+		mov GhostIgnoreDotFlag, 0
+		mov DirAvailable[0], 0
+		mov DirAvailable[1], 0
+		mov DirAvailable[2], 0
+		mov DirAvailable[3], 0
+		mov GhostEatPoints, 200
+		mov ecx, 868
+		mov esi, 0
+		ResetBoardGame:
+			mov al, RboardArray[esi]
+			mov boardArray[esi], al
+			inc esi
+			Loop ResetBoardGame
+		mov dh, 14
+		mov dl, 20
+		CALL GoToXY
+		mov eax, 8
+		CALL SetTextColor
+		mov edx, OFFSET PlayAgain
+		CALL writestring
+		mov eax,0
+		CALL readchar
+		mov AgainFlag, al
+
+RET
+EndGameAnimation ENDP
 END main
