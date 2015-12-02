@@ -1,5 +1,5 @@
 ---------------------------------------------------------------------------------------------
-|    Number of Lines used in program: 2453                                                  |
+|    Number of Lines used in program: 2533                                                  |
 ---------------------------------------------------------------------------------------------
 
 ---------------------------------------------------------------------------------------------
@@ -13,11 +13,11 @@ Jordan: Start Screen Animation, Win Screen Animation, Lose Screen Animation, Pac
 Cam: Level Layout, Scoreboard, Print Current Score, Timer
 
 Derek: Ghost Spawn, Ghost Movement, Continuous Movement (Pacman/Ghosts), Ghost Scoring, 
-       Ghost Collision, Big Dot Effect (Ghosts)
+       Ghost Collision, Big Dot Effect (Ghosts), Documentation
        
 ---------------------------------------------------------------------------------------------
 |    Known Bugs:                                                                            |
 ---------------------------------------------------------------------------------------------
 
-1) Random dot disappear in the corner but still cound towards the score. We can't replicate
+1) Random dot disappear in the corner but still count towards the score. We can't replicate
    this consistently.
