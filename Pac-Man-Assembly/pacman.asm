@@ -159,6 +159,7 @@ LivesString BYTE "< < <",0
 LivesPosY db 26
 LivesPosX db 70
 GameOverMess BYTE "GAME OVER",0
+GameWonMess BYTE "YOU  WON!"
 PlayAgain BYTE "Play Again(Y/N)?: ",0
 .code
 main PROC
@@ -2355,6 +2356,24 @@ EndGameAnimation PROC
 			mov eax, 200
 			CALL Delay
 			Loop SecondWonLoop
+
+		mov dh, 14
+		mov dl, 22
+		CALL GoToXY
+		mov eax, 14
+		CALL SetTextColor
+		mov ecx, 9
+		mov esi, 0
+		PrintGameWon:
+			mov al, GameWonMess[esi]
+			CALL writechar
+			mov eax, 200
+			CALL Delay
+			inc esi
+			Loop PrintGameWon
+
+		mov eax, 1000
+		CALL Delay
 
 		ResetVar:
 		mov LivesPosY, 26
