@@ -8,7 +8,7 @@
 
 Jordan: Start Screen Animation, Win Screen Animation, Lose Screen Animation, Pacman Move, 
         Pacman Collision, Portal, Fruit, End Game, Lives, Next Level, Print Previous Score,
-        Restart Game, Big Dot Effect (Pacman), Redraw Board
+        Restart Game, Big Dot Effect (Pacman), Redraw Board, Run_Pacman Batch File
 
 Cam: Level Layout, Scoreboard, Print Current Score, Timer
 
