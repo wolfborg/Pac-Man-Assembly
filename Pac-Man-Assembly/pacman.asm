@@ -1,41 +1,49 @@
-;Title: Pacman in Assembly
+;------------------------------------------------------------------
+;Title: Pac-Man in Assembly WITH GHOSTS
 ;Contributors: Jordan Williams, Derek Chaplin, Cam Mielbye
+;Description:
+;	A clone of the popular game Pac-Man written in Assembly and
+;	includes continuous Pac-Man movement and ghosts
+;------------------------------------------------------------------
+
 INCLUDE Irvine/Irvine32.inc
 
 .data
+;Collision board
+boardArray  db '############################', 	;28 in each row
+			   '#............##............#', 
+			   '#.####.#####.##.#####.####.#', 
+			   '#o####.#####.##.#####.####o#',
+			   '#.####.#####.##.#####.####.#', 
+			   '#..........................#', 
+			   '#.####.##.########.##.####.#', 
+			   '#.####.##.########.##.####.#',	;This is used for collision.
+			   '#......##....##....##......#',
+			   '######.##### ## #####.######', 
+			   '######.##### ## #####.######'
+		    db '######.##          ##.######',
+			   '######.## ######## ##.######', 
+			   '######.## #      # ##.######', 
+			   '      .   #      #   .      ', 
+			   '######.## #      # ##.######',	;It is a little hard to read but its the 
+			   '######.## ######## ##.######', 
+			   '######.##          ##.######', 
+			   '######.## ######## ##.######', 
+			   '######.## ######## ##.######',
+			   '#............##............#' 
+		    db '#.####.#####.##.#####.####.#', 
+			   '#.####.#####.##.#####.####.#', 
+			   '#o..##.......  .......##..o#',	;same as the map below.
+			   '###.##.##.########.##.##.###', 
+			   '###.##.##.########.##.##.###', 
+			   '#......##..........##......#', 
+			   '#.##########.##.##########.#',
+			   '#.##########.##.##########.#', 
+			   '#..........................#', 
+			   '############################'
 
-DOWNARROW BYTE 50h
-LEFTARROW BYTE 4Bh
-RIGHTARROW BYTE 4Dh
-UPARROW BYTE 48h
-PacmanLives db 3
-PastScoreX db 65
-PastScoreY db 9
-Levels db 0
-NextLevelFlag db 0
-BigDotTime dd ?
-EatGhostsFlag db 0
-StartTime dd ?
-EndGameFlag db 0
-DotsGoneFlag db 246
-PortalFlag db 0
-CollisionFlag db 0
-PacPosX db 26
-PacPosY db 23
-PacPosLastX db 2
-PacPosLastY db 0
-PacSymLast db '<'
-PacCollVal dw 1
-PacCollValLast dw 2
-PacCollPos dw 657
-ScoreX db 63
-ScoreY db 4
-Score dw 0
-AgainFlag db ?
-NoMoreFruit dd 0
-FruitTime dd 0
-PreviousScore dw 0
-boardArray  db '############################', ;28 in each row
+;Collision board used to reset level
+RboardArray db '############################', 
 			   '#............##............#', 
 			   '#.####.#####.##.#####.####.#', 
 			   '#o####.#####.##.#####.####o#',
@@ -56,48 +64,20 @@ boardArray  db '############################', ;28 in each row
 			   '######.## ######## ##.######', 
 			   '######.## ######## ##.######',
 			   '#............##............#' 
-		   db  '#.####.#####.##.#####.####.#', 
-			   '#.####.#####.##.#####.####.#', 
-			   '#o..##.......  .......##..o#',	;same as the map below.
-			   '###.##.##.########.##.##.###', 
-			   '###.##.##.########.##.##.###', 
-			   '#......##..........##......#', 
-			   '#.##########.##.##########.#',
-			   '#.##########.##.##########.#', 
-			   '#..........................#', 
-			   '############################'
-RboardArray  db '############################', 
-			   '#............##............#', 
-			   '#.####.#####.##.#####.####.#', 
-			   '#o####.#####.##.#####.####o#',
-			   '#.####.#####.##.#####.####.#', 
-			   '#..........................#', 
-			   '#.####.##.########.##.####.#', 
-			   '#.####.##.########.##.####.#',	;This is used for collision.
-			   '#......##....##....##......#',
-			   '######.##### ## #####.######', 
-			   '######.##### ## #####.######'
-		    db '######.##          ##.######',
-			   '######.## ######## ##.######', 
-			   '######.## #      # ##.######', 
-			   '      .   #      #   .      ', 
-			   '######.## #      # ##.######',	;It is a little hard to read but its the 
-			   '######.## ######## ##.######', 
-			   '######.##          ##.######', 
-			   '######.## ######## ##.######', 
-			   '######.## ######## ##.######',
-			   '#............##............#' 
-		   db  '#.####.#####.##.#####.####.#', 
-			   '#.####.#####.##.#####.####.#', 
-			   '#o..##.......  .......##..o#',	;same as the map below.
-			   '###.##.##.########.##.##.###', 
-			   '###.##.##.########.##.##.###', 
-			   '#......##..........##......#', 
-			   '#.##########.##.##########.#',
-			   '#.##########.##.##########.#', 
-			   '#..........................#', 
-			   '############################'
-ClearRow BYTE "                                                     ",0
+		    db '#.####.#####.##.#####.####.#', 
+			    '#.####.#####.##.#####.####.#', 
+			    '#o..##.......  .......##..o#',	;same as the map below.
+			    '###.##.##.########.##.##.###', 
+			    '###.##.##.########.##.##.###', 
+			    '#......##..........##......#', 
+			    '#.##########.##.##########.#',
+			    '#.##########.##.##########.#', 
+			    '#..........................#', 
+			    '############################'
+
+ClearRow BYTE "                                                     ",0 	;Used for start screen animation
+
+;Visual baord
 row1  db "# # # # # # # # # # # # # # # # # # # # # # # # # # # #    ___________________ ",0
 row2  db "# . . . . . . . . . . . . # # . . . . . . . . . . . . #   |                   |",0  
 row3  db "# . # # # # . # # # # # . # # . # # # # # . # # # # . #   |  <Current Score>  |",0  
@@ -129,21 +109,84 @@ row28 db "# . # # # # # # # # # # . # # . # # # # # # # # # # . #   |___________
 row29 db "# . # # # # # # # # # # . # # . # # # # # # # # # # . #   |   <High Score>    |",0  ;64 for High score
 row30 db "# . . . . . . . . . . . . . . . . . . . . . . . . . . #   |    -              |",0 
 row31 db "# # # # # # # # # # # # # # # # # # # # # # # # # # # #   |___________________|",0 
+
+;Key inputs
+DOWNARROW BYTE 50h
+LEFTARROW BYTE 4Bh
+RIGHTARROW BYTE 4Dh
+UPARROW BYTE 48h
+
+;Timers
+StartTime dd ? 		;Beginning of level timer
+BigDotTime dd ?		;Temporary big dot effect timer
+FruitTime dd 0 		;Fruit spawn timer (more of a flag now really)
+
+;Flags
+NextLevelFlag db 0 		;Set when all dots eaten, used to reset level
+EatGhostsFlag db 0 		;Set when big dot eaten, used to temporarily eat ghosts
+EndGameFlag db 0 		;Set when Pac-Man dies or game is won, used to display end game messages
+DotsGoneFlag db 246 	;Tracks number of dots left in the level, once it's zero the level is complete
+PortalFlag db 0 		;Set when Pac-Man collides with a portal, used to move Pac-Man to other portal
+CollisionFlag db 0 		;Set whenever Pac-Man collides with something on the collision board, used to cause actions based on type of collision
+AgainFlag db ?			;Set when player enters Y or N to play again, used to either restart game or end program
+NoMoreFruit dd 0 		;Set after the fruit has spawned, used to make sure no more fruits spawn
+
+;Pac-Man variables
+PacPosX db 26  		;Pac-Man X position on visual board
+PacPosY db 23  		;Pac-Man Y position on visual board
+PacPosLastX db 2 	
+PacPosLastY db 0
+PacSymLast db '<' 	;Current Pac-Man direction symbol
+PacCollVal dw 1
+PacCollValLast dw 2
+PacCollPos dw 657 	;Pac-Man collision board value
+PacmanLives db 3 	;Amount of lives the player has
+
+;Scoring variables
+PastScoreX db 65    		;Past score X position on visual board
+PastScoreY db 9				;Past score Y position on visual board
+ScoreX db 63 				;Current score X position on visual board
+ScoreY db 4 				;Current score Y position on visual board
+Score dw 0 					;Current score of the game
+PreviousScore dw 0 			;Previous level score
+Levels db 0 				;Tracks number of levels cleared
+LivesString BYTE "< < <",0 	;Used for displaying number of lives left
+LivesPosY db 26 			;Lives X position on visual board
+LivesPosX db 70 			;Lives Y position on visual board
+
+GhostColors db 0Ch, 0Bh, 0Dh, 0Eh   	;Red, Pink, Light Blue, and Orange (really yellow actually)
+GhostOriginalXs db 23, 25, 28, 30 		;Ghost original X positions on the visual board (Y not needed because they all start at same Y position)
+GhostWait db 0, 0, 0, 0 				;Spawn zone flag after a ghost is eaten
+GhostXs db 23, 25, 28, 30 				;Ghost X positions on visual board
+GhostYs db 14, 14, 14, 14 				;Ghost Y positions on visual board
+GhostCollisions dd 349, 349, 349, 349 	;Ghost collision values
+GhostDirs db 0, 0, 0, 0 				;Ghost directions
+GhostSpawn db 1, 1, 1, 1				;Used to check if ghost is in spawn zone
+TempTime dd 0 							;Temporary timer used for when a ghost is eaten and needs to wait at spawn
+GhostIgnoreDotFlag db 0 				;Flag used to make sure ghosts don't affect dots on the visual board
+DirAvailable db 0,0,0,0 				;Used to determine which of the four directions are available to a ghost
+GhostEatPoints dd 200 					;Used to track amount of points given when a ghost is eaten, which increases with each ghost eaten during one big dot effect
+
+;Animation screen variables
 LinePos dd 0
 PrintX db 0
 PrintY db 0
 PrintPacX db 0
 PrintPacY db 0
-PrintPacSym db '<'
+PrintPacSym db '<'   ;Used just for the animations
 TopBorDelay dd 5
 StarMess BYTE "Starring:",0
 PacMess BYTE "Pacman",0
 ClrMess BYTE "            ",0
-DirKeyMess BYTE "Use the ARROW keys to move Pacman",0
+DirKeyMess BYTE "Use the ARROW keys to move Pacman",0  ;Input instructions
+
+;Ghost names
 Clyde BYTE "Clyde",0
 Pinky BYTE "Pinky",0
 Inky BYTE "Inky",0
 Blinky BYTE "Blinky",0
+
+;Title screen
 PacmanTitle1  db "#########    #######   #########  #       #   #######   #         #",0
 PacmanTitle2  db "#        #  #       #  #          ##     ##  #       #  ##        #",0
 PacmanTitle3  db "#        #  #       #  #          # #   # #  #       #  # #       #",0
@@ -155,20 +198,19 @@ PacmanTitle8  db "#           #       #  #          #       #  #       #  #     
 PacmanTitle9  db "#           #       #  #          #       #  #       #  #       # #",0
 PacmanTitle10 db "#           #       #  #          #       #  #       #  #        ##",0
 PacmanTitle11 db "#           #       #  #########  #       #  #       #  #         #",0
-LivesString BYTE "< < <",0
-LivesPosY db 26
-LivesPosX db 70
+
+;End game messages
 GameOverMess BYTE "GAME OVER",0
 GameWonMess BYTE "YOU  WON!"
 PlayAgain BYTE "Play Again(Y/N)?: ",0
+
 .code
+;Plays the start screen, prints the board, and runs the main game loop
 main PROC
-	
 	CALL Randomize
 	CALL StartScreen
 	
 	MainGame:
-		
 		CALL CLRSCR
 		CALL PrintBoard
 		mov dh, 26
@@ -222,419 +264,48 @@ main PROC
 			Call readchar
 			mov AgainFlag, al
 			jmp AgainCheck
-ToEnd:
-exit
+	ToEnd:
+	exit
 main ENDP
 
+;Used to print out the visual board at the beginning of the game
 PrintBoard PROC
 	mov eax, 15
 	CALL SetTextColor
 	mov ecx, 31
 	mov edx, OFFSET row1 - 80
 
-BoardLoop:
-	
-	ADD edx, 80
-	CALL writestring
-	CALL CRLF
+	BoardLoop:
+		ADD edx, 80
+		CALL writestring
+		CALL CRLF
 
-	Loop BoardLoop
+		Loop BoardLoop
 
-	mov dl, PacPosX
-	mov dh, PacPosY
-	CALL GoTOXY
-	mov eax, 14
-	CALL SetTextColor
-	mov al, '<'
-	CALL writechar
+		mov dl, PacPosX
+		mov dh, PacPosY
+		CALL GoTOXY
+		mov eax, 14
+		CALL SetTextColor
+		mov al, '<'
+		CALL writechar
 
-RET 
+	RET 
 PrintBoard ENDP
 
-.data
-GhostColors db 0Ch, 0Bh, 0Dh, 0Eh
-GhostOriginalXs db 23, 25, 28, 30
-GhostWait db 0, 0, 0, 0
-GhostXs db 23, 25, 28, 30
-GhostYs db 14, 14, 14, 14
-GhostCollisions dd 349, 349, 349, 349
-GhostDirs db 0, 0, 0, 0
-GhostSpawn db 1, 1, 1, 1	;used to check if Ghost is in spawn zone
-TempTime dd 0
-
-.code
-SpawnGhosts PROC USES eax ecx edx esi
-	mov eax, 0
-	mov ecx, 4
-	mov esi, 0
-
-	Spawn:
-		mov al, GhostColors[esi]
-		Call SetTextColor
-		mov dl, GhostXs[esi]
-		mov dh, GhostYs[esi]
-		Call GotoXY
-		mov al, 'G'
-		Call WriteChar
-		inc esi
-		loop Spawn
-
-	ret
-SpawnGhosts ENDP
-
-CheckGhostSpawnZone PROC USES eax ebx edx
-	mov al, GhostSpawn[esi]
-	cmp eax, 1
-	je Spawn
-	jmp ToEnd
-
-Spawn:
-	mov al, GhostWait[esi]
-	cmp eax, 0
-	jg Respawn
-
-	cmp esi, 0
-	je RedSpawn
-	cmp esi, 1
-	je BlueSpawn
-	cmp esi, 2
-	je PinkSpawn
-	cmp esi, 3
-	je OrangeSpawn
-
-ToSpawn:
-	mov GhostWait[esi], 0
-	mov dl, GhostXs[esi]
-	mov dh, GhostYs[esi]
-	Call GotoXY
-	mov al, ' '
-	Call WriteChar
-
-	mov GhostYs[esi], 11
-	mov GhostXs[esi], 26
-	
-	mov bl, EatGhostsFlag
-	cmp bl, 1
-	je BlueGhost
-
-	mov al, GhostColors[esi]
-	Call SetTextColor
-
-Continue:
-	mov dl, GhostXs[esi]
-	mov dh, GhostYs[esi]
-	Call GotoXY
-	mov al, 'G'
-	Call WriteChar
-	
-	mov GhostSpawn[esi], 0
-	mov GhostCollisions[esi*(type GhostCollisions)], 321
-	jmp ToEnd
-
-RedSpawn:
-	Call GetMSeconds
-	sub eax, StartTime
-	cmp eax, 5000
-	jge ToSpawn
-BlueSpawn:
-	Call GetMSeconds
-	sub eax, StartTime
-	cmp eax, 7500
-	jge ToSpawn
-PinkSpawn:
-	Call GetMSeconds
-	sub eax, StartTime
-	cmp eax, 10000
-	jge ToSpawn
-OrangeSpawn:
-	Call GetMSeconds
-	sub eax, StartTime
-	cmp eax, 12500
-	jge ToSpawn
-	jmp ToEnd
-
-Respawn:
-	Call GetMSeconds
-	sub eax, TempTime
-	cmp eax, 3000
-	jge ToSpawn
-	jmp ToEnd
-
-BlueGhost:
-	mov al, 9
-	Call SetTextColor
-	jmp Continue
-
-ToEnd:
-	ret
-CheckGhostSpawnZone ENDP
-
-;directions: 0 = up  1 = down  2 = left  3 = right
-GhostMove PROC USES eax ebx ecx edx esi
-	mov eax, 0
-	mov ecx, 4
+;Prints the current score of the current game
+PrintCurrentScore PROC
 	mov edx, 0
-	mov esi, 0
-
-	Move:
-		mov al, GhostSpawn[esi]
-		cmp al, 1
-		je SpawnTime
-		jmp RegularMove
-		
-	SpawnTime:
-		Call CheckGhostSpawnZone
-		jmp EndLoop
-
-	RegularMove:
-		Call GhostDotIgnore
-
-		;empty old spot
-		mov dl, GhostXs[esi]
-		mov dh, GhostYs[esi]
-		Call GotoXY
-
-		mov bl, GhostIgnoreDotFlag
-		cmp bl, 1
-		je PutDotBack
-		cmp bl, 2
-		je PutBigDotBack
-		cmp bl, 3
-		je PutFruitBack
-
-		mov al, ' '
-		Call WriteChar
-
-	Continue1:
-		;set new spot
-		Call GhostNextMove
-
-		;print in new spot
-		mov dl, GhostXs[esi]
-		mov dh, GhostYs[esi]
-		Call GotoXY
-
-		mov bl, EatGhostsFlag
-		cmp bl, 1
-		je BlueGhost
-
-		mov al, GhostColors[esi]
-		Call SetTextColor
-
-	Continue2:
-		mov al, 'G'
-		Call WriteChar
-
-	EndLoop:
-		inc esi
-		loop Move
-		jmp ToEnd
-
-PutDotBack:
-	mov al, 0Fh
-	Call SetTextColor
-	mov al, '.'
-	Call WriteChar
-	jmp Continue1
-
-PutBigDotBack:
-	mov al, 0Fh
-	Call SetTextColor
-	mov al, 'o'
-	Call WriteChar
-	jmp Continue1
-
-PutFruitBack:
-	mov al, 10
-	Call SetTextColor
-	mov al, 235
-	Call WriteChar
-	jmp Continue1
-
-BlueGhost:
-	mov al, 9
-	Call SetTextColor
-	jmp Continue2
-
-ToEnd:
-	Call GhostCollideCheck
-	ret
-
-GhostMove ENDP
-
-.data
-GhostIgnoreDotFlag db 0
-
-.code
-GhostDotIgnore PROC USES eax ebx
 	mov eax, 0
-	mov ebx, 0
+	mov dl, ScoreX
+	mov dh, ScoreY
+	CALL GoToXY
+	mov ax, Score
+	call writedec
+	RET
+PrintCurrentScore ENDP
 
-	mov eax, GhostCollisions[esi*(type GhostCollisions)]
-	mov bl, boardArray[eax]
-	cmp bl, '.'
-	je SetIgnoreFlag
-	cmp bl, 'o'
-	je SetBigIgnoreFlag
-	mov GhostIgnoreDotFlag, 0
-	jmp ToEnd
-
-SetIgnoreFlag:
-	mov GhostIgnoreDotFlag, 1
-	jmp ToEnd
-
-SetBigIgnoreFlag:
-	mov GhostIgnoreDotFlag, 2
-
-ToEnd:
-	ret
-GhostDotIgnore ENDP
-
-.data
-DirAvailable db 0,0,0,0
-
-.code
-GhostNextMove PROC USES eax ecx edx
-	Call GhostDirCheck
-	mov al, GhostDirs[esi]
-	cmp al, 0
-	je MoveUp
-	cmp al, 1
-	je MoveDown
-	cmp al, 2
-	je MoveLeft
-	cmp al, 3
-	je MoveRight
-
-MoveUp:
-	sub GhostCollisions[esi*(type GhostCollisions)], 28
-	sub GhostYs[esi], 1
-	jmp ToEnd
-MoveDown:
-	add GhostCollisions[esi*(type GhostCollisions)], 28
-	add GhostYs[esi], 1
-	jmp ToEnd
-MoveLeft:
-	sub GhostCollisions[esi*(type GhostCollisions)], 1
-	sub GhostXs[esi], 2
-	jmp ToEnd
-MoveRight:
-	add GhostCollisions[esi*(type GhostCollisions)], 1
-	add GhostXs[esi], 2
-
-ToEnd:
-	ret
-GhostNextMove ENDP
-
-GhostDirCheck PROC USES eax ebx ecx edx edi
-	mov DirAvailable[0], 0
-	mov DirAvailable[1], 0
-	mov DirAvailable[2], 0
-	mov DirAvailable[3], 0
-
-	mov eax, 0
-	mov edi, 0
-	mov edx, 0
-
-	mov al, GhostDirs[esi]
-	cmp al, 0
-	je CheckUp
-	cmp al, 1
-	je CheckDown
-	cmp al, 2
-	je CheckLeft
-	cmp al, 3
-	je CheckRight
-
-CheckUp:
-	mov edi, GhostCollisions[esi*(type GhostCollisions)]
-	sub edi, 28
-	mov al, boardArray[edi]
-	cmp al, '#'
-	je ChangeDir
-	jmp ToEnd
-CheckDown:
-	mov edi, GhostCollisions[esi*(type GhostCollisions)]
-	add edi, 28
-	mov al, boardArray[edi]
-	cmp al, '#'
-	je ChangeDir
-	jmp ToEnd
-CheckLeft:
-	mov edi, GhostCollisions[esi*(type GhostCollisions)]
-	sub edi, 1
-	mov al, boardArray[edi]
-	cmp al, '#'
-	je ChangeDir
-	jmp ToEnd
-CheckRight:
-	mov edi, GhostCollisions[esi*(type GhostCollisions)]
-	add edi, 1
-	mov al, boardArray[edi]
-	cmp al, '#'
-	je ChangeDir
-	jmp ToEnd
-
-ChangeDir:
-CheckAvailable:
-	mov edi, GhostCollisions[esi*(type GhostCollisions)]
-	sub edi, 28
-	mov al, boardArray[edi]
-	cmp al, '#'
-	jne DirAvailableUp
-Continue1:
-	mov edi, GhostCollisions[esi*(type GhostCollisions)]
-	add edi, 28
-	mov al, boardArray[edi]
-	cmp al, '#'
-	jne DirAvailableDown
-Continue2:
-	mov edi, GhostCollisions[esi*(type GhostCollisions)]
-	sub edi, 1
-	mov al, boardArray[edi]
-	cmp al, '#'
-	jne DirAvailableLeft
-Continue3:
-	mov edi, GhostCollisions[esi*(type GhostCollisions)]
-	add edi, 1
-	mov al, boardArray[edi]
-	cmp al, '#'
-	jne DirAvailableRight
-	jmp ToChoice
-
-DirAvailableUp:
-	mov DirAvailable[0], 1
-	jmp Continue1
-DirAvailableDown:
-	mov DirAvailable[1], 1
-	jmp Continue2
-DirAvailableLeft:
-	mov DirAvailable[2], 1
-	jmp Continue3
-DirAvailableRight:
-	mov DirAvailable[3], 1
-
-ToChoice:
-	mov ebx, 0
-	mov eax, 0
-	mov ecx, 1
-
-	DirChoice:
-		mov eax, 4
-		mov ebx, 0
-		Call RandomRange
-		mov bl, DirAvailable[eax]
-		cmp bl, 1
-		je ChoiceEnd
-		inc ecx
-		loop DirChoice
-
-ChoiceEnd:
-	mov GhostDirs[esi], al
-ToEnd:
-	ret
-GhostDirCheck ENDP
-
+;Used to move Pac-Man and Ghosts and controls the game speed
 Movements PROC
 	mov eax, 150	;delay in milliseconds, smaller = faster game
 	mov ecx, 1
@@ -652,12 +323,36 @@ Movements PROC
 	ret
 Movements ENDP
 
-MoveInput PROC USES edx
-	Call readkey
+;Triggers the fruit spawn after half the dots have been eaten
+CheckFruit PROC
+	CMP FruitTime, 1
+	je YesFruit
+	CMP DotsGoneFlag, 123
+	jne NoFruit
+	
+	YesFruit:
+		mov dh, 23
+		mov dl, 28
+		CALL GoToXY
+		mov eax, 10
+		CALL SetTextColor
+		mov al, 235
+		CALL writechar
+		mov boardArray[658], 'F'
+		mov eax, 14
+		CALL SetTextColor
+		mov NoMoreFruit, 1
+		mov FruitTime, 2
 
-	ret
-MoveInput ENDP
+	NoFruit:
+	RET
+CheckFruit ENDP
 
+;-------------------------
+;Pac-Man procedures
+;-------------------------
+
+;Moves Pac-Man continuously, checks for collisions, and changes icon based on direction
 PacMove PROC
 	mov eax, 14
 	Call SetTextColor
@@ -666,7 +361,9 @@ PacMove PROC
 	mov dh, PacPosY
 	CALL GoToXY
 	mov eax, 0
-	CALL MoveInput
+	push edx
+	CALL ReadKey	;This is what causes continuous movement
+	pop edx
 
 	CMP ah, UPARROW
 	je DeltaUp
@@ -784,24 +481,19 @@ PacMove PROC
 		mov al, PacSymLast
 		CALL writechar
 
-Moved:
-mov PortalFlag, 0
+	Moved:
+	mov PortalFlag, 0
 
-Call GhostCollideCheck
-RET
+	Call GhostCollideCheck
+	RET
 PacMove ENDP
 
-PrintCurrentScore PROC
-	mov edx, 0
-	mov eax, 0
-	mov dl, ScoreX
-	mov dh, ScoreY
-	CALL GoToXY
-	mov ax, Score
-	call writedec
-RET
-PrintCurrentScore endp
-
+;Performs actions based on certain collisions
+;-Wall: Stops Pac-Man from moving
+;-Small Dot: +10 to score
+;-Big Dot: +50 to score and makes ghost turn blue and edible temporarily
+;-Fruit: +200 to score
+;-During big dot effect, points for eating ghosts increase each time
 PacmanCollision PROC USES ebx
 	mov ebx, 0
 	mov bx, PacCollPos
@@ -852,17 +544,275 @@ PacmanCollision PROC USES ebx
 		mov CollisionFlag, 0
 		JMP ExitProc
 
-ExitProc:
-mov PacCollPos, bx
-mov boardArray[bx],0
-ExitProcWall:
-RET
+	ExitProc:
+	mov PacCollPos, bx
+	mov boardArray[bx],0
+	ExitProcWall:
+	RET
 PacmanCollision ENDP
 
-.data
-GhostEatPoints dd 200
+;Checks if Pac-Man uses the portal, which brings him out the other portal
+PortalCheck PROC
+	
+	CMP PacPosX, 0
+	je PortalLeft
+	CMP PacPosX, 54
+	je PortalRight
+	jmp EndPortal
 
-.code
+	PortalRight:
+		mov dh, PacPosY
+		mov dl, PacPosX
+		CALL GoToXY
+		mov al, 20h
+		CALL writechar
+		mov PacPosX, 2
+		mov PacCollPos,393
+		mov PacCollVal, 1
+		mov dl, PacPosX
+		CALL GoToXY
+		mov PortalFlag, 1
+		mov PacSymLast, '<'
+		mov al, '<'
+		CALL writechar
+		mov PacPosLastY, 0
+		mov PacPosLastX, 2
+		jmp EndPortal
+	
+	PortalLeft:
+		mov dh, PacPosY
+		mov dl, PacPosX
+		CALL GoToXY
+		mov al, 20h
+		CALL writechar
+		mov PacPosX, 52
+		mov PacCollPos,418
+		mov PacCollVal, -1
+		mov dl, PacPosX
+		CALL GoToXY
+		mov PortalFlag, 1
+		mov PacSymLast, '>'
+		mov al, '>'
+		CALL writechar
+		mov PacPosLastY, 0
+		mov PacPosLastX, -2
+			
+
+	EndPortal:
+	RET
+PortalCheck ENDP
+
+;-------------------------
+;Ghost procedures
+;-------------------------
+
+;The initial ghost spawn that prints the ghosts in the box on the visual board
+SpawnGhosts PROC USES eax ecx edx esi
+	mov eax, 0
+	mov ecx, 4
+	mov esi, 0
+
+	Spawn:
+		mov al, GhostColors[esi]
+		Call SetTextColor
+		mov dl, GhostXs[esi]
+		mov dh, GhostYs[esi]
+		Call GotoXY
+		mov al, 'G'
+		Call WriteChar
+		inc esi
+		loop Spawn
+
+	ret
+SpawnGhosts ENDP
+
+;Checks the ghost spawn flags to determine if they need to spawn
+;Uses specific timers for ghost release at the beginning of level
+;Uses same wait time for ghost release after blue dot effect
+CheckGhostSpawnZone PROC USES eax ebx edx
+	mov al, GhostSpawn[esi]
+	cmp eax, 1
+	je Spawn
+	jmp ToEnd
+
+	Spawn:
+		mov al, GhostWait[esi]
+		cmp eax, 0
+		jg Respawn
+
+		cmp esi, 0
+		je RedSpawn
+		cmp esi, 1
+		je BlueSpawn
+		cmp esi, 2
+		je PinkSpawn
+		cmp esi, 3
+		je OrangeSpawn
+
+	ToSpawn:
+		mov GhostWait[esi], 0
+		mov dl, GhostXs[esi]
+		mov dh, GhostYs[esi]
+		Call GotoXY
+		mov al, ' '
+		Call WriteChar
+
+		mov GhostYs[esi], 11
+		mov GhostXs[esi], 26
+		
+		mov bl, EatGhostsFlag
+		cmp bl, 1
+		je BlueGhost
+
+		mov al, GhostColors[esi]
+		Call SetTextColor
+
+	Continue:
+		mov dl, GhostXs[esi]
+		mov dh, GhostYs[esi]
+		Call GotoXY
+		mov al, 'G'
+		Call WriteChar
+		
+		mov GhostSpawn[esi], 0
+		mov GhostCollisions[esi*(type GhostCollisions)], 321
+		jmp ToEnd
+
+	RedSpawn:
+		Call GetMSeconds
+		sub eax, StartTime
+		cmp eax, 5000
+		jge ToSpawn
+	BlueSpawn:
+		Call GetMSeconds
+		sub eax, StartTime
+		cmp eax, 7500
+		jge ToSpawn
+	PinkSpawn:
+		Call GetMSeconds
+		sub eax, StartTime
+		cmp eax, 10000
+		jge ToSpawn
+	OrangeSpawn:
+		Call GetMSeconds
+		sub eax, StartTime
+		cmp eax, 12500
+		jge ToSpawn
+		jmp ToEnd
+
+	Respawn:
+		Call GetMSeconds
+		sub eax, TempTime
+		cmp eax, 3000
+		jge ToSpawn
+		jmp ToEnd
+
+	BlueGhost:
+		mov al, 9
+		Call SetTextColor
+		jmp Continue
+
+	ToEnd:
+	ret
+CheckGhostSpawnZone ENDP
+
+;Moves each ghosts towards their current direction
+;directions: 0 = up  1 = down  2 = left  3 = right
+GhostMove PROC USES eax ebx ecx edx esi
+	mov eax, 0
+	mov ecx, 4
+	mov edx, 0
+	mov esi, 0
+
+	Move:
+		mov al, GhostSpawn[esi]
+		cmp al, 1
+		je SpawnTime
+		jmp RegularMove
+		
+	SpawnTime:
+		Call CheckGhostSpawnZone
+		jmp EndLoop
+
+	RegularMove:
+		Call GhostDotIgnore
+
+		;empty old spot
+		mov dl, GhostXs[esi]
+		mov dh, GhostYs[esi]
+		Call GotoXY
+
+		mov bl, GhostIgnoreDotFlag
+		cmp bl, 1
+		je PutDotBack
+		cmp bl, 2
+		je PutBigDotBack
+		cmp bl, 3
+		je PutFruitBack
+
+		mov al, ' '
+		Call WriteChar
+
+	Continue1:
+		;set new spot
+		Call GhostNextMove
+
+		;print in new spot
+		mov dl, GhostXs[esi]
+		mov dh, GhostYs[esi]
+		Call GotoXY
+
+		mov bl, EatGhostsFlag
+		cmp bl, 1
+		je BlueGhost
+
+		mov al, GhostColors[esi]
+		Call SetTextColor
+
+	Continue2:
+		mov al, 'G'
+		Call WriteChar
+
+	EndLoop:
+		inc esi
+		loop Move
+		jmp ToEnd
+
+	PutDotBack:
+		mov al, 0Fh
+		Call SetTextColor
+		mov al, '.'
+		Call WriteChar
+		jmp Continue1
+
+	PutBigDotBack:
+		mov al, 0Fh
+		Call SetTextColor
+		mov al, 'o'
+		Call WriteChar
+		jmp Continue1
+
+	PutFruitBack:
+		mov al, 10
+		Call SetTextColor
+		mov al, 235
+		Call WriteChar
+		jmp Continue1
+
+	BlueGhost:
+		mov al, 9
+		Call SetTextColor
+		jmp Continue2
+
+	ToEnd:
+	Call GhostCollideCheck
+	ret
+GhostMove ENDP
+
+;Checks if a ghost collides with Pac-Man
+;This is done by comparing their collision board values
+;Normally ghosts kill Pac-Man which either resets the level or ends the game
+;If ghosts are blue, however, Pac-Man eats the ghosts so they get reset to spawn
 GhostCollideCheck PROC USES eax ebx ecx edx esi
 	mov eax, 0
 	mov ebx, 0
@@ -881,179 +831,368 @@ GhostCollideCheck PROC USES eax ebx ecx edx esi
 		loop CollideCheck
 	jmp ToEnd
 
-EffectCheck:
-	mov cl, EatGhostsFlag
-	cmp cl, 0
-	je KillPacMan
-	cmp cl, 1
-	je EatGhost
-	jmp Continue
+	EffectCheck:
+		mov cl, EatGhostsFlag
+		cmp cl, 0
+		je KillPacMan
+		cmp cl, 1
+		je EatGhost
+		jmp Continue
 
-KillPacman:
-	dec PacmanLives
-	mov dh, LivesPosY
-	mov dl, LivesPosX
-	mov al, ' '
-	CALL GoToXY
-	CALL writechar
-	sub LivesPosX, 2
-	cmp PacmanLives, 0
-	je EndGame
-	jmp ResetPac
-
-	EndGame:
-		mov EndGameFlag, 1
-		jmp ToEnd
-
-EatGhost:
-	mov eax, GhostEatPoints
-	add Score, ax
-	add GhostEatPoints, 200
-
-	;reset Ghost to spawn
-	Call GetMSeconds
-	mov TempTime, eax
-	mov eax, 0
-	mov GhostCollisions[esi*(type GhostCollisions)], 321
-	mov al, GhostOriginalXs[esi]
-	mov GhostWait[esi], 1
-	mov GhostSpawn[esi], 1
-	mov GhostXs[esi], al
-	mov GhostYs[esi], 14
-	
-	mov dl, GhostXs[esi]
-	mov dh, GhostYs[esi]
-	Call GotoXY
-	mov al, GhostColors[esi]
-	Call SetTextColor
-	mov al, 'G'
-	Call WriteChar
-	mov eax, 14
-	CALL SetTextColor
-	mov dh, PacPosY
-	mov dl, PacPosX
-	CALL GoToXY
-	mov al, PacSymLast
-	CALL writechar
-	jmp Continue
-
-ResetPac:
-	Call GetMSeconds
-	mov StartTime, eax
-	mov dh, PacPosY
-	mov dl, PacPosX
-	CALL GoToXY
-	mov al, ' '
-	CALL writechar
-
-	mov edi, 0
-	mov ecx, 4
-	GhostReset:
-		mov dl, GhostXs[edi]
-		mov dh, GhostYs[edi]
-		Call GotoXY
+	KillPacman:
+		dec PacmanLives
+		mov dh, LivesPosY
+		mov dl, LivesPosX
 		mov al, ' '
+		CALL GoToXY
+		CALL writechar
+		sub LivesPosX, 2
+		cmp PacmanLives, 0
+		je EndGame
+		jmp ResetPac
+
+		EndGame:
+			mov EndGameFlag, 1
+			jmp ToEnd
+
+	EatGhost:
+		mov eax, GhostEatPoints
+		add Score, ax
+		add GhostEatPoints, 200
+
+		;reset Ghost to spawn
+		Call GetMSeconds
+		mov TempTime, eax
+		mov eax, 0
+		mov GhostCollisions[esi*(type GhostCollisions)], 321
+		mov al, GhostOriginalXs[esi]
+		mov GhostWait[esi], 1
+		mov GhostSpawn[esi], 1
+		mov GhostXs[esi], al
+		mov GhostYs[esi], 14
+		
+		mov dl, GhostXs[esi]
+		mov dh, GhostYs[esi]
+		Call GotoXY
+		mov al, GhostColors[esi]
+		Call SetTextColor
+		mov al, 'G'
 		Call WriteChar
-		inc edi
-		loop GhostReset
+		mov eax, 14
+		CALL SetTextColor
+		mov dh, PacPosY
+		mov dl, PacPosX
+		CALL GoToXY
+		mov al, PacSymLast
+		CALL writechar
+		jmp Continue
+
+	ResetPac:
+		Call GetMSeconds
+		mov StartTime, eax
+		mov dh, PacPosY
+		mov dl, PacPosX
+		CALL GoToXY
+		mov al, ' '
+		CALL writechar
+
+		mov edi, 0
+		mov ecx, 4
+		GhostReset:
+			mov dl, GhostXs[edi]
+			mov dh, GhostYs[edi]
+			Call GotoXY
+			mov al, ' '
+			Call WriteChar
+			inc edi
+			loop GhostReset
+		
+		mov PacPosX, 26
+		mov PacPosY, 23
+		mov PacPosLastX, 2
+		mov PacPosLastY, 0
+		mov PacSymLast, '<'
+		mov PacCollVal, 1
+		mov PacCollValLast, 2
+		mov PacCollPos, 657
+		mov GhostColors[0], 0Ch
+		mov GhostColors[1], 0Bh
+		mov GhostColors[2], 0Dh
+		mov GhostColors[3], 0Eh
+		mov GhostXs[0], 23
+		mov GhostXs[1], 25
+		mov GhostXs[2], 28
+		mov GhostXs[3], 30
+		mov GhostYs[0], 14
+		mov GhostYs[1], 14
+		mov GhostYs[2], 14
+		mov GhostYs[3], 14
+		mov GhostCollisions[0*(type GhostCollisions)], 349
+		mov GhostCollisions[1*(type GhostCollisions)], 349
+		mov GhostCollisions[2*(type GhostCollisions)], 349
+		mov GhostCollisions[3*(type GhostCollisions)], 349
+		mov GhostDirs[0], 0
+		mov GhostDirs[1], 0
+		mov GhostDirs[2], 0
+		mov GhostDirs[3], 0
+		mov GhostSpawn[0], 1
+		mov GhostSpawn[1], 1
+		mov GhostSpawn[2], 1
+		mov GhostSpawn[3], 1
+		
+		mov eax, 14
+		CALL SetTextColor
+		mov dh, PacPosY
+		mov dl, PacPosX
+		CALL GoToXY
+		mov al, '<'
+		CALL writechar
+		mov eax, 600
+		CALL Delay
 	
-	mov PacPosX, 26
-	mov PacPosY, 23
-	mov PacPosLastX, 2
-	mov PacPosLastY, 0
-	mov PacSymLast, '<'
-	mov PacCollVal, 1
-	mov PacCollValLast, 2
-	mov PacCollPos, 657
-	mov GhostColors[0], 0Ch
-	mov GhostColors[1], 0Bh
-	mov GhostColors[2], 0Dh
-	mov GhostColors[3], 0Eh
-	mov GhostXs[0], 23
-	mov GhostXs[1], 25
-	mov GhostXs[2], 28
-	mov GhostXs[3], 30
-	mov GhostYs[0], 14
-	mov GhostYs[1], 14
-	mov GhostYs[2], 14
-	mov GhostYs[3], 14
-	mov GhostCollisions[0*(type GhostCollisions)], 349
-	mov GhostCollisions[1*(type GhostCollisions)], 349
-	mov GhostCollisions[2*(type GhostCollisions)], 349
-	mov GhostCollisions[3*(type GhostCollisions)], 349
-	mov GhostDirs[0], 0
-	mov GhostDirs[1], 0
-	mov GhostDirs[2], 0
-	mov GhostDirs[3], 0
-	mov GhostSpawn[0], 1
-	mov GhostSpawn[1], 1
-	mov GhostSpawn[2], 1
-	mov GhostSpawn[3], 1
-	
-	mov eax, 14
-	CALL SetTextColor
-	mov dh, PacPosY
-	mov dl, PacPosX
-	CALL GoToXY
-	mov al, '<'
-	CALL writechar
-	mov eax, 600
-	CALL Delay
-	
-ToEnd:
+	ToEnd:
 	ret
 GhostCollideCheck ENDP
 
-PortalCheck PROC
+;Used to make sure ghosts don't affect the dots or fruit on the visual board
+GhostDotIgnore PROC USES eax ebx
+	mov eax, 0
+	mov ebx, 0
+
+	mov eax, GhostCollisions[esi*(type GhostCollisions)]
+	mov bl, boardArray[eax]
+	cmp bl, '.'
+	je SetIgnoreFlag
+	cmp bl, 'o'
+	je SetBigIgnoreFlag
+	mov GhostIgnoreDotFlag, 0
+	jmp ToEnd
+
+	SetIgnoreFlag:
+		mov GhostIgnoreDotFlag, 1
+		jmp ToEnd
+
+	SetBigIgnoreFlag:
+		mov GhostIgnoreDotFlag, 2
+
+	ToEnd:
+	ret
+GhostDotIgnore ENDP
+
+;Uses the current direction to move an individual ghost
+;This is used in GhostMove for each ghost
+GhostNextMove PROC USES eax ecx edx
+	Call GhostDirCheck
+	mov al, GhostDirs[esi]
+	cmp al, 0
+	je MoveUp
+	cmp al, 1
+	je MoveDown
+	cmp al, 2
+	je MoveLeft
+	cmp al, 3
+	je MoveRight
+
+	MoveUp:
+		sub GhostCollisions[esi*(type GhostCollisions)], 28
+		sub GhostYs[esi], 1
+		jmp ToEnd
+	MoveDown:
+		add GhostCollisions[esi*(type GhostCollisions)], 28
+		add GhostYs[esi], 1
+		jmp ToEnd
+	MoveLeft:
+		sub GhostCollisions[esi*(type GhostCollisions)], 1
+		sub GhostXs[esi], 2
+		jmp ToEnd
+	MoveRight:
+		add GhostCollisions[esi*(type GhostCollisions)], 1
+		add GhostXs[esi], 2
+
+	ToEnd:
+	ret
+GhostNextMove ENDP
+
+;Checks if the direction a ghost is heading towards doesn't have a wall next
+;If it does have a wall, then randomly choose a new direction based on all available directions
+GhostDirCheck PROC USES eax ebx ecx edx edi
+	mov DirAvailable[0], 0
+	mov DirAvailable[1], 0
+	mov DirAvailable[2], 0
+	mov DirAvailable[3], 0
+
+	mov eax, 0
+	mov edi, 0
+	mov edx, 0
+
+	mov al, GhostDirs[esi]
+	cmp al, 0
+	je CheckUp
+	cmp al, 1
+	je CheckDown
+	cmp al, 2
+	je CheckLeft
+	cmp al, 3
+	je CheckRight
+
+	CheckUp:
+		mov edi, GhostCollisions[esi*(type GhostCollisions)]
+		sub edi, 28
+		mov al, boardArray[edi]
+		cmp al, '#'
+		je ChangeDir
+		jmp ToEnd
+	CheckDown:
+		mov edi, GhostCollisions[esi*(type GhostCollisions)]
+		add edi, 28
+		mov al, boardArray[edi]
+		cmp al, '#'
+		je ChangeDir
+		jmp ToEnd
+	CheckLeft:
+		mov edi, GhostCollisions[esi*(type GhostCollisions)]
+		sub edi, 1
+		mov al, boardArray[edi]
+		cmp al, '#'
+		je ChangeDir
+		jmp ToEnd
+	CheckRight:
+		mov edi, GhostCollisions[esi*(type GhostCollisions)]
+		add edi, 1
+		mov al, boardArray[edi]
+		cmp al, '#'
+		je ChangeDir
+		jmp ToEnd
+
+	ChangeDir:
+	CheckAvailable:
+		mov edi, GhostCollisions[esi*(type GhostCollisions)]
+		sub edi, 28
+		mov al, boardArray[edi]
+		cmp al, '#'
+		jne DirAvailableUp
+	Continue1:
+		mov edi, GhostCollisions[esi*(type GhostCollisions)]
+		add edi, 28
+		mov al, boardArray[edi]
+		cmp al, '#'
+		jne DirAvailableDown
+	Continue2:
+		mov edi, GhostCollisions[esi*(type GhostCollisions)]
+		sub edi, 1
+		mov al, boardArray[edi]
+		cmp al, '#'
+		jne DirAvailableLeft
+	Continue3:
+		mov edi, GhostCollisions[esi*(type GhostCollisions)]
+		add edi, 1
+		mov al, boardArray[edi]
+		cmp al, '#'
+		jne DirAvailableRight
+		jmp ToChoice
+
+	DirAvailableUp:
+		mov DirAvailable[0], 1
+		jmp Continue1
+	DirAvailableDown:
+		mov DirAvailable[1], 1
+		jmp Continue2
+	DirAvailableLeft:
+		mov DirAvailable[2], 1
+		jmp Continue3
+	DirAvailableRight:
+		mov DirAvailable[3], 1
+
+	ToChoice:
+		mov ebx, 0
+		mov eax, 0
+		mov ecx, 1
+
+		DirChoice:
+			mov eax, 4
+			mov ebx, 0
+			Call RandomRange
+			mov bl, DirAvailable[eax]
+			cmp bl, 1
+			je ChoiceEnd
+			inc ecx
+			loop DirChoice
+
+	ChoiceEnd:
+		mov GhostDirs[esi], al
+	ToEnd:
+	ret
+GhostDirCheck ENDP
+
+;Timer used to track how long the big dot affects ghosts
+CheckTime PROC
+
+	CALL GetMSeconds
+	mov ebx, eax
+	sub eax, StartTime
+	sub ebx, BigDotTime
+
+	CMP ebx, 5000
+	jge GhostRevert
+	jmp DoneTime
 	
-	CMP PacPosX, 0
-	je PortalLeft
-	CMP PacPosX, 54
-	je PortalRight
-	jmp EndPortal
 
-	PortalRight:
-			mov dh, PacPosY
-			mov dl, PacPosX
-			CALL GoToXY
-			mov al, 20h
-			CALL writechar
-			mov PacPosX, 2
-			mov PacCollPos,393
-			mov PacCollVal, 1
-			mov dl, PacPosX
-			CALL GoToXY
-			mov PortalFlag, 1
-			mov PacSymLast, '<'
-			mov al, '<'
-			CALL writechar
-			mov PacPosLastY, 0
-			mov PacPosLastX, 2
-			jmp EndPortal
-	
-	PortalLeft:
-			mov dh, PacPosY
-			mov dl, PacPosX
-			CALL GoToXY
-			mov al, 20h
-			CALL writechar
-			mov PacPosX, 52
-			mov PacCollPos,418
-			mov PacCollVal, -1
-			mov dl, PacPosX
-			CALL GoToXY
-			mov PortalFlag, 1
-			mov PacSymLast, '>'
-			mov al, '>'
-			CALL writechar
-			mov PacPosLastY, 0
-			mov PacPosLastX, -2
-			
+	GhostRevert:
+		mov EatGhostsFlag,0
+		mov GhostEatPoints, 200
+		CALL BigDotEffect
 
-EndPortal:
-RET
-PortalCheck ENDP
+	DoneTime:
+	RET
+CheckTime ENDP
 
+;Effect that happens temporarily once Pac-Man eats the big dot
+;-Turns ghosts blue
+;-Makes ghosts edible to Pac-Man
+;-Eating ghosts: 1st ghost +200, 2nd ghost +400, 3rd ghost +600, 4th ghost +800
+BigDotEffect PROC USES esi ecx
+	mov eax, 0
+	mov esi, 0
+	mov ecx, 4
+	CMP EatGhostsFlag, 1
+	je Edible
+	jmp Deadly
+
+	Edible:
+		mov al, 9
+		CALL SetTextColor
+		mov al, 'G'
+		mov dl, GhostXs[esi]
+		mov dh, GhostYs[esi]
+		CALL GoToXY
+		CALL writechar
+		inc esi
+		Loop Edible
+
+	jmp BigDotDone
+		 
+	Deadly:
+		mov al, GhostColors[esi]
+		CALL SetTextColor
+		mov al, 'G'
+		mov dl, GhostXs[esi]
+		mov dh, GhostYs[esi]
+		CALL GoToXY
+		CALL writechar
+		inc esi
+		Loop Deadly
+		
+	BigDotDone:
+	mov eax, 14
+	CALL SetTextColor
+	RET
+BigDotEffect ENDP
+
+;------------------------
+;Animation procedures
+;------------------------
+
+;Starting animation
 StartScreen PROC
 
 	mov eax, 15
@@ -1233,9 +1372,10 @@ StartScreen PROC
 	sub PrintY, 8
 	CALL PrintBorPos
 	CALL PrintTitle
-RET
+	RET
 StartScreen ENDP
 
+;Used in start screen animation to print Pac-Man
 PrintPacPos PROC
 
 	mov dh, PrintPacY
@@ -1244,9 +1384,10 @@ PrintPacPos PROC
 	CALL GoToXY
 	CALL writechar
 
-RET
+	RET
 PrintPacPos ENDP
 
+;Used in start screen animation to print the border
 PrintBorPos PROC
 
 	mov dh, PrintY
@@ -1254,9 +1395,10 @@ PrintBorPos PROC
 	CALL GoToXY
 	CALL writechar
 
-RET
+	RET
 PrintBorPos ENDP
 
+;Used in start screen animation to print the game title
 PrintTitle PROC uses edx ecx
 	
 	mov edx, 0
@@ -1277,9 +1419,10 @@ PrintTitle PROC uses edx ecx
 		Loop TitleLoop
 		
 		CALL StarringAnimation
-RET
+	RET
 PrintTitle ENDP
 
+;Used in the start screen animation to help display the title screen
 PrintLine PROC uses ecx
 	mov eax, 14
 	CALL SetTextColor
@@ -1292,9 +1435,11 @@ PrintLine PROC uses ecx
 		Loop TitleLoop
 
 
-RET
+	RET
 PrintLine ENDP
 
+;Displays each ghost in the start screen animation
+;Then shows Pac-Man eat a big dot and then eat a ghost
 StarringAnimation PROC
 	
 	mov eax, 15
@@ -1313,9 +1458,10 @@ StarringAnimation PROC
 	CALL PacAnimation
 	CALL InputMessage
 
-RET
+	RET
 StarringAnimation ENDP
 
+;Start screen animation of Pac-Man eating a ghost
 PacAnimation PROC uses ecx
 	
 	mov eax, 15
@@ -1442,9 +1588,10 @@ PacAnimation PROC uses ecx
 	mov eax, 600
 	CALL Delay
 
-RET
+	RET
 PacAnimation ENDP
 
+;Introduces each ghost in the start screen animation
 GhostAnimations PROC
 
 	CALL BlinkyStar
@@ -1452,9 +1599,10 @@ GhostAnimations PROC
 	CALL InkyStar
 	CALL ClydeStar
 
-RET
+	RET
 GhostAnimations ENDP 
 
+;The red ghost intro
 BlinkyStar PROC
 
 	mov eax, 12
@@ -1480,9 +1628,10 @@ BlinkyStar PROC
 	mov eax, 500
 	CALL Delay
 
-RET
+	RET
 BlinkyStar ENDP
 
+;The pink ghost intro
 PinkyStar PROC
 
 	mov eax, 13
@@ -1508,9 +1657,10 @@ PinkyStar PROC
 	mov eax, 500
 	CALL Delay
 
-RET
+	RET
 PinkyStar ENDP
 
+;The blue ghost intro
 InkyStar PROC
 
 	mov eax, 11
@@ -1536,9 +1686,10 @@ InkyStar PROC
 	mov eax, 500
 	CALL Delay
 
-RET
+	RET
 InkyStar ENDP
 
+;The red ghost intro
 ClydeStar PROC
 
 	mov eax, 14
@@ -1569,26 +1720,34 @@ ClydeStar PROC
 	mov edx, OFFSET ClrMess
 	CALL writestring
 
-RET
+	RET
 ClydeStar ENDP
 
+;Displays the input controls of the game
 InputMessage PROC uses edx
 
-mov eax, 15
-CALL SetTextColor
-mov dh,25
-mov dl, 24
-CALL GoToXY 
-mov edx, OFFSET DirKeyMess
-CALL writestring
-mov dh,27
-mov dl, 24
-CALL GoToXY 
-mov eax, 1750
-CALL Delay
-RET
+	mov eax, 15
+	CALL SetTextColor
+	mov dh,25
+	mov dl, 24
+	CALL GoToXY 
+	mov edx, OFFSET DirKeyMess
+	CALL writestring
+	mov dh,27
+	mov dl, 24
+	CALL GoToXY 
+	mov eax, 1750
+	CALL Delay
+	RET
 InputMessage ENDP
 
+;------------------------------
+;End of game procedures
+;------------------------------
+
+;Checks if the level ends and checks if the game ends
+;If 2all the dots have been eaten, the level ends
+;If 15 levels have been cleared, the game ends
 CheckEndGame PROC
 
 	CMP DotsGoneFlag, 0
@@ -1607,92 +1766,10 @@ CheckEndGame PROC
 	
 	ContinueGame:
 
-RET
+	RET
 CheckEndGame ENDP
 
-CheckFruit PROC
-	CMP FruitTime, 1
-	je YesFruit
-	CMP DotsGoneFlag, 123
-	jne NoFruit
-	
-	YesFruit:
-		mov dh, 23
-		mov dl, 28
-		CALL GoToXY
-		mov eax, 10
-		CALL SetTextColor
-		mov al, 235
-		CALL writechar
-		mov boardArray[658], 'F'
-		mov eax, 14
-		CALL SetTextColor
-		mov NoMoreFruit, 1
-		mov FruitTime, 2
-
-NoFruit:
-RET
-CheckFruit ENDP
-
-CheckTime PROC
-
-	CALL GetMSeconds
-	mov ebx, eax
-	sub eax, StartTime
-	sub ebx, BigDotTime
-
-	CMP ebx, 5000
-	jge GhostRevert
-	jmp DoneTime
-	
-
-	GhostRevert:
-		mov EatGhostsFlag,0
-		mov GhostEatPoints, 200
-		CALL BigDotEffect
-
-DoneTime:
-RET
-CheckTime ENDP
-
-BigDotEffect PROC USES esi ecx
-	mov eax, 0
-	mov esi, 0
-	mov ecx, 4
-	CMP EatGhostsFlag, 1
-	je Edible
-	jmp Deadly
-
-	Edible:
-		mov al, 9
-		CALL SetTextColor
-		mov al, 'G'
-		mov dl, GhostXs[esi]
-		mov dh, GhostYs[esi]
-		CALL GoToXY
-		CALL writechar
-		inc esi
-		Loop Edible
-
-	jmp BigDotDone
-		 
-	Deadly:
-		mov al, GhostColors[esi]
-		CALL SetTextColor
-		mov al, 'G'
-		mov dl, GhostXs[esi]
-		mov dh, GhostYs[esi]
-		CALL GoToXY
-		CALL writechar
-		inc esi
-		Loop Deadly
-		
-BigDotDone:
-mov eax, 14
-CALL SetTextColor
-RET
-BigDotEffect ENDP
-
+;Resets the game variables and positions and reprints the board, player, and ghost
 NextLevel PROC
 
 	mov ecx, 868
@@ -1753,9 +1830,10 @@ NextLevel PROC
 	
 	inc Levels
 
-RET
+	RET
 NextLevel ENDP
 
+;Redraws the visual board when printing a new level
 ReDrawBoard PROC
 
 	mov dh, 0
@@ -2133,9 +2211,10 @@ ReDrawBoard PROC
 		inc esi
 		Loop ReRow31
 
-RET
+	RET
 ReDrawBoard ENDP
 
+;Every time a level is cleared, the player's score at that point is logged and displayed
 PrintPreviousScore PROC
 	
 	mov eax, 15
@@ -2151,9 +2230,10 @@ PrintPreviousScore PROC
 	mov PreviousScore, ax
 	inc PastScoreY
 
-RET
+	RET
 PrintPreviousScore ENDP
 
+;Game over and game win animations
 EndGameAnimation PROC
 
 	mov PacPosX, 26
@@ -2448,6 +2528,6 @@ EndGameAnimation PROC
 		CALL readchar
 		mov AgainFlag, al
 
-RET
+	RET
 EndGameAnimation ENDP
 END main
